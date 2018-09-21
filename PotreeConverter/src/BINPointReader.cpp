@@ -43,7 +43,8 @@ BINPointReader::BINPointReader(string path, AABB aabb, double scale, PointAttrib
 	archivePtr = std::unique_ptr<boost::archive::binary_iarchive>(new boost::archive::binary_iarchive(*reader));
 
 	// Calculate AABB:
-	if (false) {
+	if (true) {
+		std::cout << "COMPUTING AABB" << std::endl;
 		pointCount = 0;
 		while(readNextPoint()){
 			Point p = getPoint();
@@ -59,6 +60,8 @@ BINPointReader::BINPointReader(string path, AABB aabb, double scale, PointAttrib
 
 		reader = new ifstream(*currentFile, ios::in | ios::binary);
 		archivePtr = std::unique_ptr<boost::archive::binary_iarchive>(new boost::archive::binary_iarchive(*reader));
+	} else {
+		std::cout << "NOT COMPUTING AABB" << std::endl;
 	}
 
 }
