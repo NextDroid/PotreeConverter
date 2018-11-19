@@ -12,6 +12,7 @@ include_directories(include ${RAPIDJSON_INCLUDE_DIR})
 include_directories(include ${ARGUMENTS_INCLUDE_DIR})
 
 SOURCE_GROUP("Header Files\\io" FILES
+	include/BoostBINPointReader.hpp
 	include/BINPointReader.hpp
 	include/BINPointWriter.hpp
 	include/LASPointReader.h
@@ -24,6 +25,7 @@ SOURCE_GROUP("Header Files\\io" FILES
 )
 
 SOURCE_GROUP("Source Files\\io" FILES
+	src/BoostBINPointReader.cpp
 	src/BINPointReader.cpp
 	src/LASPointReader.cpp
 	src/LASPointWriter.cpp
@@ -41,10 +43,15 @@ target_link_libraries(PotreeConverter ${LASZIP_LIBRARY})
 find_package(Boost COMPONENTS serialization REQUIRED)
 target_link_libraries(PotreeConverter ${Boost_LIBRARIES})
 
+# Find and include LASzip
+find_package(LASzip REQUIRED)
+target_include_directories(PotreeConverter PRIVATE ${LASzip_INCLUDE_DIRS})
+target_link_libraries(PotreeConverter PRIVATE ${LASzip_LIBRARIES})
+
 if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -pthread -lstdc++ -lm")
     target_link_libraries(PotreeConverter -lstdc++fs)
 endif()
 
 install(TARGETS PotreeConverter RUNTIME DESTINATION bin/ )
-add_custom_command(TARGET PotreeConverter POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/PotreeConverter/resources $<TARGET_FILE_DIR:PotreeConverter>/resources)
+add_custom_command(TARGET PotreeConverter POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/PotreeConverter/PotreeConverter/resources $<TARGET_FILE_DIR:PotreeConverter>/resources)
