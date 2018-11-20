@@ -75,7 +75,7 @@ PointReader *PotreeConverter::createPointReader(string path, PointAttributes poi
 	} else if(iEndsWith(path, ".lidar")) {
 		reader = new FlatBufferReader(path, aabb, scale, pointAttributes,  flat_buffer);
 	} else {
-		std::cerr << "Unrecognized File Extension, could not create reader" << path<<std::endl;
+		std::cerr << "Unrecognized File Extension, could not create reader" << path <<std::endl;
 	}
 
 	return reader;
@@ -161,7 +161,7 @@ AABB PotreeConverter::calculateAABB(){
 
 		}
 	}
-    std::cout<<"AABB function is done and the calculated dimensions are :   "<<std::endl ;
+    std::cout << "AABB function is done and the calculated dimensions are :   " << std::endl ;
 	return aabb;
 }
 

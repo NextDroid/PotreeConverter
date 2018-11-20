@@ -19,7 +19,7 @@
 #include "Point.h"
 #include "PointReader.h"
 #include "PointAttributes.hpp"
-#include "BoostBINPointReader.hpp"
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
 
@@ -35,14 +35,14 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb, double scale, PointAttributes pointAttributes, bool flat_buffer ) : endOfFile(false), count(1), pos_len(0), numbytes(0), filesize(0), total_points_count(0){
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb, double scale, PointAttributes pointAttributes, string flat_buffer ) : endOfFile(false), count(1), pointsLength(0), numberOfBytes(0), fileSize(0),  counter(0){
         this->path = path;
         this->aabb = aabb;
         this->scale = scale;
         this->attributes = pointAttributes;
         buffer = new unsigned char[4];
-        flat= flat_buffer;
-        std::cout<<"file type  0 for points and 1 for bbox = " <<flat <<std::endl;
+        flatBufferFileType= flat_buffer;
+        std::cout<<"file type  points  for points and  bbox for bounding box points = " <<flatBufferFileType <<std::endl;
         std::cout << "Filepath = " << path << std::endl;
 
         if(fs::is_directory(path)){
@@ -64,11 +64,9 @@ namespace Potree{
         // Calculate AABB:
         if (true ) {
             pointCount = 0;
-            std::cout<<"AABB function is running now "<<std::endl;
             while(readNextPoint()) {
 
                 p = getPoint();
-
                 if (pointCount == 0) {
                     this->aabb = AABB(p.position);
                 } else {
@@ -110,12 +108,12 @@ namespace Potree{
         try{
             std::cout.precision(std::numeric_limits<double>::max_digits10);
             reader->read(reinterpret_cast<char *>(buffer), 4);
-            numbytes = (uint32_t) buffer[3] << 24 |
-                       (uint32_t) buffer[2] << 16 |
-                       (uint32_t) buffer[1] << 8 |
-                       (uint32_t) buffer[0];
-            filesize+= numbytes;
-            if (numbytes==0){
+            numberOfBytes = (uint32_t) buffer[3] << 24 |
+                            (uint32_t) buffer[2] << 16 |
+                            (uint32_t) buffer[1] << 8 |
+                            (uint32_t) buffer[0];
+            fileSize+= numberOfBytes;
+            if (numberOfBytes==0){
                 endOfFile = false;
 
                 std::cout << "END OF FILE REACHED" << std::endl;
@@ -123,26 +121,25 @@ namespace Potree{
             }
             else{
                 buf2.clear();
-                buf2.reserve(numbytes);
+                buf2.reserve(numberOfBytes);
                 if (reader->eof()){
                     std::cerr << "Reader is at end of file" << std::endl;
                     endOfFile = false;
                     return false;
                 }
-                reader->read(&buf2[0], numbytes);
-                if (!flat){
+                reader->read(&buf2[0], numberOfBytes);
+                if (flatBufferFileType== "point")
+                {
                     pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
                     pos = pointcloud->points();
-                    pos_len = pos->Length();
-                    if(pos_len == 0)
-                        total_points_count += pos_len;
-                    return true;
+                    pointsLength = pos->Length();
+                    if(pointsLength == 0)
+                        return true;
                 }
-                else if (flat){
+                else if (flatBufferFileType=="bbox"){
                     track = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
-
                     statesFb = track->states();
-                    states_len = statesFb->Length();
+                    statesLength = statesFb->Length();
                     return  true;}
             }
         }
@@ -154,77 +151,70 @@ namespace Potree{
 
     }
 
-    bool FlatBufferReader::centroid() {
-        /*Function used to calculate the centroid of every bounding box passed*/
 
 
-        for(int jj=0;jj<vec_len;jj++){
-            centroid_x= centroid_x+bbox->Get(jj)->x();
-            centroid_y= centroid_y+bbox->Get(jj)->y();
-            centroid_z= centroid_z+bbox->Get(jj)->z();
-        }
-        Centroidbbox.x= centroid_x/8;Centroidbbox.y= centroid_y/8;Centroidbbox.z= centroid_z/8;
-        centroid_x=centroid_y=centroid_z=0;
+    bool FlatBufferReader::centroid(){
+        /*Function used to calculate the centroid and edges of every bounding box passed and populates the points to the AABB  */
 
+        if(counter==0){
+            auto &state = *statesFb;
+            for(int stateIdx=0;stateIdx<statesLength;stateIdx++) {
+                bbox = state[stateIdx]->bbox();
+                auto bbox_len = bbox->Length();
+                timeStamps = state[stateIdx]->timestamps();
+                Yaw = state[stateIdx]->yaw();
 
-    }
+                //Reads all the vertices points
+                for (int bboxIdx = 0; bboxIdx < bbox_len; bboxIdx++) {
+                    Vertices.x = bbox->Get(bboxIdx)->x();
+                    Vertices.y = bbox->Get(bboxIdx)->y();
+                    Vertices.z = bbox->Get(bboxIdx)->z();
+                    Points.push_back({Vertices.x, Vertices.y, Vertices.z});
 
-    bool FlatBufferReader::bboxPoint() {
-        /* Function used to read the points inside the bounding box */
-
-
-        point.position.x = bbox->Get(bboxidx)->x();
-        point.position.y = bbox->Get(bboxidx)->y();
-        point.position.z = bbox->Get(bboxidx)->z();
-        point.gpsTime = ts;
-
-        return true;
-    }
-    bool FlatBufferReader::bboxReader() {
-/* Bbox Reader reads the bounding box from the states */
-
-        if (bboxidx < vec_len) {
-            if(bboxidx==0 ){
-                centroid();
-                if (counter==0) {
-                    point.position.x = Centroidbbox.x;
-                    point.position.y = Centroidbbox.y;
-                    point.position.z = Centroidbbox.z;
-                    point.gpsTime = ts;
-                    counter++;
-                    return true;
                 }
-                if(counter!=0){
-                    bboxPoint();
-                    bboxidx++;
-                    return true;}
+
+                //Reads all the face centers
+                for (int face_Idx = 0; face_Idx < 3; face_Idx++) {
+
+
+                    Points.push_back({((bbox->Get(face_Idx)->x()) + (bbox->Get(face_Idx + 5)->x())) / 2,
+                                      ((bbox->Get(face_Idx)->y()) + (bbox->Get(face_Idx + 5)->y())) / 2,
+                                      ((bbox->Get(face_Idx)->z()) + (bbox->Get(face_Idx + 5)->z())) / 2});
+                }
+                Points.push_back({((bbox->Get(3)->x()) + (bbox->Get(4)->x())) / 2,
+                                  ((bbox->Get(3)->y()) + (bbox->Get(4)->y())) / 2,
+                                  ((bbox->Get(3)->z()) + (bbox->Get(4)->z())) / 2});
             }
+            point.position.x = Points[counter].bbox_x;
+            point.position.y = Points[counter].bbox_y;
+            point.position.z = Points[counter].bbox_z;
+            point.gpsTime = timeStamps;
+            counter++;
+            return true;
 
-            bboxPoint();
-            bboxidx++;
-
-
-        } else {
-            bboxidx = 0;
-            statesidx++;
-            bboxState();
-            bboxPoint();
         }
-    }
-    bool FlatBufferReader::bboxState() {
-        /* Function automatically reads the next state when the all points from the current state are being read. */
+        else{ if (counter < Points.size()) {
 
-        auto &state = *statesFb;
-        if (statesidx < states_len) {
-            ts = state[statesidx]->timestamps();
-            ya = state[statesidx]->yaw();
-            bbox = state[statesidx]->bbox();
-            vec_len = bbox->Length();
-            bboxReader();
-        } else { statesidx = 0;bboxidx=0;
-            populatePointCloud();
-            bboxState();}
+                point.position.x = Points[counter].bbox_x;
+                point.position.y = Points[counter].bbox_y;
+                point.position.z = Points[counter].bbox_z;
+                point.gpsTime = timeStamps;
+                counter++;
+                return true;
+
+            }
+            else{
+                Points.clear();
+                counter=0;
+                populatePointCloud();
+                centroid();
+
+            }
+        }
+
+
     }
+
     bool FlatBufferReader::readNextPoint() {
         /* This is the main function which passes the read points to the AABB function everytime. */
 
@@ -246,7 +236,7 @@ namespace Potree{
         if(hasPoints && !endOfFile) {
 
 
-            if (count < pos_len) {
+            if (count < pointsLength) {
                 auto fbPoints = pos->Get(count);
                 count++;
                 point.position.x = fbPoints->x();
@@ -255,7 +245,7 @@ namespace Potree{
                 point.gpsTime = fbPoints->timestamp();
                 point.intensity = fbPoints->intensity();
                 return true;
-            } else if (count == pos_len) {
+            } else if (count == pointsLength) {
                 count = 0;
                 if (populatePointCloud()) {
                     auto fbPoints = pos->Get(count);
@@ -271,8 +261,9 @@ namespace Potree{
                     std::cout << "reader reached the  end of file" << std::endl;
                     return false;}
             }
-            else if (flat ) {
-                bboxState();
+            else if (flatBufferFileType=="bbox" ) {
+
+                centroid();
             }
             else{endOfFile = false;
                 std::cout << "end of file" << std::endl;

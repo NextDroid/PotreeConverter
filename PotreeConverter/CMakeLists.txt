@@ -37,7 +37,7 @@ SOURCE_GROUP("Source Files\\io" FILES
 SOURCE_GROUP("lib\\rapidjson" FILES ${lib_rapidjson_files})
 SOURCE_GROUP("lib\\arguments" FILES ${lib_argument_files})
 
-add_executable(PotreeConverter ${files} ${lib_rapidjson_files} ${lib_argument_files} include/FlatBufferReader.hpp src/FlatBufferReader.cpp)
+add_executable(PotreeConverter ${files} ${lib_rapidjson_files} ${lib_argument_files} )
 
 target_link_libraries(PotreeConverter ${LASZIP_LIBRARY})
 

@@ -9,15 +9,13 @@
 #include "Point.h"
 #include "PointReader.h"
 #include "PointAttributes.hpp"
-#include "BoostBINPointReader.hpp"
+
 
 #include <memory>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
 #include <fstream>
-#include <boost/serialization/serialization.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
+
 #include <DataSchemas/LidarWorld_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
 
@@ -49,15 +47,13 @@ namespace Potree{
 
     public:
 
-        FlatBufferReader(string path, AABB aabb, double scale, PointAttributes pointAttributes, bool flat_buffer);
+        FlatBufferReader(string path, AABB aabb, double scale, PointAttributes pointAttributes, string flat_buffer);
 
 
         ~FlatBufferReader();
-        bool bboxPoint();
+
         bool readNextPoint();
         bool populatePointCloud();
-        bool bboxReader();
-        bool bboxState();
 
         bool centroid();
 
@@ -65,36 +61,38 @@ namespace Potree{
         Point getPoint();
 
         AABB getAABB();
-        int32_t numbytes;
-
         long long numPoints();
-        bool flat;
-        int count=0, statesidx=0,bboxidx=0,pointCounts = 0,counter=0;
-        int pos_len, vec_len,states_len ;
-        double filesize;
-        double total_points_count, ya, ts;
+
+        int32_t numberOfBytes;
+        string flatBufferFileType;
+        int count,  counter;
+        int pointsLength, statesLength ;
+        double fileSize;
+        double timeStamps, Yaw;
 
         Point p;
-        double centroid_x=0,centroid_y=0,centroid_z=0;
-        double newX=0, newY=0,newZ=0;
-        double center=0;
+
         void close();
 
         const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;
         const LIDARWORLD::PointCloud *pointcloud;
         const Flatbuffer::GroundTruth::State *states;
         ifstream **pointer;
-        const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *vec;
         const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *bbox;
         const Flatbuffer::GroundTruth::Track *track;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
 
         unsigned char *buffer;
         std::vector<char> buf2;
-        std::vector< double>x,y,z,x1,y1,z1;
-        Eigen::Vector4d New;
-        Vector3<double>Centroidbbox;
 
+        Vector3<double>Vertices;
+        struct bboxPoints{
+            double bbox_x;
+            double bbox_y;
+            double bbox_z;
+        };
+
+        std::vector<bboxPoints>Points;
     };
 }
 #endif //VERITAS_FLATBUFFERREADER_H

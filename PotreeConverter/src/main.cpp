@@ -42,7 +42,7 @@ struct PotreeArguments {
 	StoreOption storeOption = StoreOption::ABORT_IF_EXISTS;
 	vector<string> source;
 	string outdir;
-	bool flat_buffer;
+	string flat_buffer;
 	float spacing;
 	int levels;
 	string format;
@@ -129,7 +129,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 		a.pageTemplatePath = args.get("page-template").as<string>();
 	}
 	a.outdir = args.get("outdir").as<string>();
-	a.flat_buffer= args.has("flat_buffer");
+	a.flat_buffer= args.get("flat_buffer").as<string>();
 	a.spacing = args.get("spacing").as<double>(0.0);
 	a.diagonalFraction = args.get("d").as<double>(0.0);
 	a.levels = args.get("levels").as<int>(-1);
