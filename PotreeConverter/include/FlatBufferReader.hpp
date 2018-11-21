@@ -1,6 +1,11 @@
-//
-// Created by Karthik Sivarama Krishnan on 10/24/18.
-//
+
+/*
+ * @file  FlatBufferReader.h
+ * @brief
+ * @author Karthik Sivarama Krishnan
+ * @date October 24, 2018, 10:36 AM
+ */
+
 
 #ifndef VERITAS_FLATBUFFERREADER_H
 #define VERITAS_FLATBUFFERREADER_H
@@ -32,22 +37,10 @@ using std::vector;
 namespace Potree{
 
     class FlatBufferReader : public PointReader{
-    private:
-        AABB aabb;
-        double scale;
-        string path;
-        vector<string> files;
-        vector<string>::iterator currentFile;
-        ifstream *reader;
-        PointAttributes attributes;
-        Point point;
-        long pointCount;
-
-        bool endOfFile;
 
     public:
 
-        FlatBufferReader(string path, AABB aabb, double scale, PointAttributes pointAttributes, string flat_buffer);
+        FlatBufferReader(string path, AABB aabb,  string flat_buffer);
 
 
         ~FlatBufferReader();
@@ -63,22 +56,28 @@ namespace Potree{
         AABB getAABB();
         long long numPoints();
 
-        int32_t numberOfBytes;
         string flatBufferFileType;
-        int count,  counter;
-        int pointsLength, statesLength ;
-        double fileSize;
-        double timeStamps, Yaw;
-
-        Point p;
-
+        int count,  counter, laneCounter;
+        int pointsLength, statesLength,rightLaneLength;
         void close();
 
+    private:
+        AABB aabb;
+        double scale;
+        string path;
+        vector<string> files;
+        vector<string>::iterator currentFile;
+        ifstream *reader;
+        PointAttributes attributes;
+        Point point, p;
+        long long pointCount;
+        bool endOfFile;
         const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;
         const LIDARWORLD::PointCloud *pointcloud;
         const Flatbuffer::GroundTruth::State *states;
-        ifstream **pointer;
+        const Flatbuffer::GroundTruth::Lane *Lane;
         const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *bbox;
+        const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *rightLane;
         const Flatbuffer::GroundTruth::Track *track;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
 
@@ -93,6 +92,8 @@ namespace Potree{
         };
 
         std::vector<bboxPoints>Points;
+
+
     };
 }
 #endif //VERITAS_FLATBUFFERREADER_H

@@ -22,7 +22,7 @@ SOURCE_GROUP("Header Files\\io" FILES
 	include/PointWriter.hpp
 	include/PTXPointReader.h
 	include/XYZPointReader.hpp
-	include/FlatBufferReader.hpp
+		include/FlatBufferReader.hpp
 )
 
 SOURCE_GROUP("Source Files\\io" FILES
