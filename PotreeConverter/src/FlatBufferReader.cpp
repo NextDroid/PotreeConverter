@@ -123,10 +123,10 @@ namespace Potree{
 
 //          (a).  Converting 4 bytes unsigned char buffer to uint32_t
 //          (b).  Refenced from https://stackoverflow.com/questions/34943835/convert-four-bytes-to-integer-using-c
-            auto numberOfBytes = (uint32_t) buffer[3] << 24 |
-                                 (uint32_t) buffer[2] << 16 |
-                                 (uint32_t) buffer[1] << 8 |
-                                 (uint32_t) buffer[0];
+            auto numberOfBytes =uint64_t (buffer[3] << 24 |
+                                          buffer[2] << 16 |
+                                          buffer[1] << 8 |
+                                          buffer[0]);
 
             if (numberOfBytes==0){
                 endOfFile = false;
