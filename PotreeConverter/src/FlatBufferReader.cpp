@@ -24,7 +24,6 @@
 
 #include "Point.h"
 #include "PointReader.h"
-#include "PointAttributes.hpp"
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
@@ -46,7 +45,6 @@ namespace Potree{
         this->aabb = aabb;
 
 
-        buffer = new unsigned char[4];
         flatBufferFileType= flat_buffer;
         std::cout<<"file type  points  for points and  bbox for bounding box points = " <<flatBufferFileType <<std::endl;
         std::cout << "Filepath = " << path << std::endl;
@@ -74,9 +72,9 @@ namespace Potree{
 //      Calculate AABB: for every point present in the flatbuffer file
 
         pointCount = 0;
-        while(readNextPoint()) {
+        while(read->NextPoint()) {
 
-            p = getPoint();
+            const Point p = getPoint();
             if (pointCount == 0) {
                 this->aabb = AABB(p.position);
             } else {
@@ -100,14 +98,13 @@ namespace Potree{
     void FlatBufferReader::close(){
         if(reader != NULL){
             reader->close();
-            delete[] buffer;
             delete reader;
             reader = NULL;
 
         }
     }
 
-    long long FlatBufferReader::numPoints(){
+    uint32_t FlatBufferReader::numPoints(){
         return pointCount;
     }
 
@@ -119,14 +116,15 @@ namespace Potree{
 
         try{
             std::cout.precision(std::numeric_limits<double>::max_digits10);
+            uint8_t buffer[4];
             reader->read(reinterpret_cast<char *>(buffer), 4);
 
 //          (a).  Converting 4 bytes unsigned char buffer to uint32_t
 //          (b).  Refenced from https://stackoverflow.com/questions/34943835/convert-four-bytes-to-integer-using-c
-            auto numberOfBytes =uint64_t (buffer[3] << 24 |
-                                          buffer[2] << 16 |
-                                          buffer[1] << 8 |
-                                          buffer[0]);
+            const uint32_t numberOfBytes = buffer[3] << 24 |
+                                           buffer[2] << 16 |
+                                           buffer[1] << 8 |
+                                           buffer[0]);
 
             if (numberOfBytes==0){
                 endOfFile = false;
@@ -201,10 +199,9 @@ namespace Potree{
                 //Reads all the track bounding box vertices points
 
                 for (int bboxIdx = 0; bboxIdx < bbox_len; bboxIdx++) {
-                    Vertices.x = bbox->Get(bboxIdx)->x();
-                    Vertices.y = bbox->Get(bboxIdx)->y();
-                    Vertices.z = bbox->Get(bboxIdx)->z();
-                    Points.push_back({Vertices.x, Vertices.y, Vertices.z});
+                    Points.push_back({bbox->Get(bboxIdx)->x(),
+                                      bbox->Get(bboxIdx)->y(),
+                                      bbox->Get(bboxIdx)->z()});
 
                 }
 

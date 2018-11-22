@@ -13,7 +13,6 @@
 #include "AABB.h"
 #include "Point.h"
 #include "PointReader.h"
-#include "PointAttributes.hpp"
 
 
 #include <memory>
@@ -54,7 +53,7 @@ namespace Potree{
         Point getPoint();
 
         AABB getAABB();
-        long long numPoints();
+        uint32_t numPoints();
 
         string flatBufferFileType;
         int count,  counter, laneCounter;
@@ -68,9 +67,8 @@ namespace Potree{
         vector<string> files;
         vector<string>::iterator currentFile;
         ifstream *reader;
-        PointAttributes attributes;
-        Point point, p;
-        long long pointCount;
+        Point point;
+        uint32_t pointCount;
         bool endOfFile;
         const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;
         const LIDARWORLD::PointCloud *pointcloud;
@@ -81,10 +79,8 @@ namespace Potree{
         const Flatbuffer::GroundTruth::Track *track;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
 
-        unsigned char *buffer;
         std::vector<char> buf2;
 
-        Vector3<double>Vertices;
         struct bboxPoints{
             double bbox_x;
             double bbox_y;
