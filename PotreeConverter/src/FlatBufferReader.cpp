@@ -24,10 +24,7 @@
 
 #include "Point.h"
 #include "PointReader.h"
-#include "PointAttributes.hpp"
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Eigen>
 
 using std::ifstream;
 using std::cout;
@@ -40,13 +37,13 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flat_buffer ) : endOfFile(false), count(1), pointsLength(0),  counter(0), laneCounter(0),detectionCounter(0){
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0),  counter(0), laneCounter(0),detectionCounter(0){
         this->path = path;
         this->aabb = aabb;
 
 
-        buffer = new unsigned char[4];
-        flatBufferFileType= flat_buffer;
+//        buffer = new unsigned char[4];
+        flatBufferFileType= flatBufferType;
         std::cout<<"file type  points  for points and  bbox for bounding box points = " <<flatBufferFileType <<std::endl;
         std::cout << "Filepath = " << path << std::endl;
 
@@ -75,8 +72,8 @@ namespace Potree{
         pointCount = 0;
         while(readNextPoint()) {
 
-            p = getPoint();
-            std::cout<<p<<std::endl;
+            const Point p = getPoint();
+//            std::cout<<p<<std::endl;
             if (pointCount == 0) {
                 this->aabb = AABB(p.position);
             } else {
@@ -100,14 +97,14 @@ namespace Potree{
     void FlatBufferReader::close(){
         if(reader != NULL){
             reader->close();
-            delete[] buffer;
+
             delete reader;
             reader = NULL;
 
         }
     }
 
-    long long FlatBufferReader::numPoints(){
+    int64_t FlatBufferReader::numPoints(){
         return pointCount;
     }
 
@@ -118,19 +115,18 @@ namespace Potree{
          */
 
         try{
+            uint8_t buffer[4];
             std::cout.precision(std::numeric_limits<double>::max_digits10);
             reader->read(reinterpret_cast<char *>(buffer), 4);
 
 //          (a).  Converting 4 bytes unsigned char buffer to uint32_t
 //          (b).  Refenced from https://stackoverflow.com/questions/34943835/convert-four-bytes-to-integer-using-c
-            auto numberOfBytes = (uint64_t)( buffer[3] << 24 |
-                                             buffer[2] << 16 |
-                                             buffer[1] << 8 |
-                                             buffer[0]);
+            const uint32_t numberOfBytes = buffer[3] << 24 |
+                                           buffer[2] << 16 |
+                                           buffer[1] << 8 |
+                                           buffer[0];
 
             if (numberOfBytes==0){
-                endOfFile = false;
-
                 std::cout << "END OF FILE REACHED" << std::endl;
                 return false;
             }
@@ -139,7 +135,7 @@ namespace Potree{
                 buf2.reserve(numberOfBytes);
                 if (reader->eof()){
                     std::cerr << "Reader is at end of file" << std::endl;
-                    endOfFile = false;
+
                     return false;
                 }
                 reader->read(&buf2[0], numberOfBytes);
@@ -157,15 +153,18 @@ namespace Potree{
 
                     //    For the flatbuffer file of type track bounding box pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
-                else if (flatBufferFileType=="bbox"){
+                else if (flatBufferFileType=="bbox")
+                {
                     track = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
                     statesFb = track->states();
                     statesLength = statesFb->Length();
-                    return  true;}
+                    return  true;
+                }
 
                     //    For the flatbuffer file of type Lanes pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
-                else if(flatBufferFileType=="lanes"){
+                else if(flatBufferFileType=="lanes")
+                {
                     Lane= flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
 
                     rightLane = Lane->right();
@@ -174,21 +173,23 @@ namespace Potree{
                     leftLaneLength = leftLane->Length();
                     spine = Lane ->spine();
                     spineLength = spine->Length();
-                    return  true;}
+                    return  true;
+                }
 
                     //    For the flatbuffer file of type Detections pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
-                else if(flatBufferFileType=="detections"){
+                else if(flatBufferFileType=="detections")
+                {
                     Detection= flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
                     center= Detection->detections();
-                   detectionLength= center->Length();
+                    detectionLength= center->Length();
                     return true;
                 }
 
             }
         }
         catch (std::exception& e) {
-            endOfFile = false;
+
             std::cout << "No More Points Left" << std::endl;
             return false;
         }
@@ -196,6 +197,12 @@ namespace Potree{
     }
 
     bool FlatBufferReader::lanePoints() {
+
+        /** @brief This function is used to combine all the lane points (Left,Right,Spine) into a vector of LanePoints for every 4 bytes of data
+         *  @param[in] reader with 4 bytes of data
+         *  @return bool
+         */
+
         // Assign all the lane points into a vetor for every segment.
 
         for (int leftLaneidx = 0; leftLaneidx < leftLaneLength; leftLaneidx++) {
@@ -232,10 +239,7 @@ namespace Potree{
                 //Reads all the track bounding box vertices points
 
                 for (int bboxIdx = 0; bboxIdx < bbox_len; bboxIdx++) {
-                    Vertices.x = bbox->Get(bboxIdx)->x();
-                    Vertices.y = bbox->Get(bboxIdx)->y();
-                    Vertices.z = bbox->Get(bboxIdx)->z();
-                    Points.push_back({Vertices.x, Vertices.y, Vertices.z});
+                    Points.push_back({bbox->Get(bboxIdx)->x(), bbox->Get(bboxIdx)->y(), bbox->Get(bboxIdx)->z()});
 
                 }
 
@@ -304,7 +308,7 @@ namespace Potree{
             }
         }
 
-        if(hasPoints && !endOfFile) {
+        if(hasPoints ) {
             if (flatBufferFileType=="point" ) {
                 // check if the end of 4 bytes segment reached
                 if (count < pointsLength) {
@@ -331,8 +335,8 @@ namespace Potree{
                         return true;
                     }
                     else{
-                        endOfFile = false;
-                        std::cout << "reader reached the  end of file" << std::endl;
+
+                        std::cout << "There are no More Pointcloud Points Left in the file" << std::endl;
                         return false;
                     }
                 }
@@ -369,8 +373,7 @@ namespace Potree{
                         return true;
                     }
                     else{
-                        endOfFile = false;
-                        std::cout << "reader reached the  end of file" << std::endl;
+                        std::cout << "There are no More Lane Points Left in the file" << std::endl;
                         return false;
                     }
                 }
@@ -400,9 +403,9 @@ namespace Potree{
                         detectionCounter++;
                         return true;
                     }
-            }
+                }
 
-        }}
+            }}
         return hasPoints;
     }
     Point FlatBufferReader::getPoint() {

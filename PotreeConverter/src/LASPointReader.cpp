@@ -81,7 +81,7 @@ void LASPointReader::close(){
 	}
 }
 
-long long LASPointReader::numPoints(){
+int64_t LASPointReader::numPoints(){
 	if (reader->header->version_major >= 1 && reader->header->version_minor >= 4) {
 		return reader->header->extended_number_of_point_records;
 	} else {

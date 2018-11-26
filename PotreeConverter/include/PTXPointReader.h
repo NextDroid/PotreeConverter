@@ -70,7 +70,7 @@ public:
         return PTXPointReader::aabbs[path];
     }
 
-    inline long long numPoints() {
+    inline int64_t numPoints() {
         if (PTXPointReader::counts.find(path) == counts.end()) {
             scanForAABB();
         }
