@@ -19,7 +19,7 @@
 
 
 
-#include "FlatBufferReader.hpp"
+#include "FlatBufferReader.h"
 #include "stuff.h"
 
 #include "Point.h"
@@ -28,7 +28,6 @@
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
-
 
 using std::ifstream;
 using std::cout;
@@ -41,7 +40,7 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flat_buffer ) : endOfFile(false), count(1), pointsLength(0),  counter(0), laneCounter(0){
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flat_buffer ) : endOfFile(false), count(1), pointsLength(0),  counter(0), laneCounter(0),detectionCounter(0){
         this->path = path;
         this->aabb = aabb;
 
@@ -77,6 +76,7 @@ namespace Potree{
         while(readNextPoint()) {
 
             p = getPoint();
+            std::cout<<p<<std::endl;
             if (pointCount == 0) {
                 this->aabb = AABB(p.position);
             } else {
@@ -123,10 +123,10 @@ namespace Potree{
 
 //          (a).  Converting 4 bytes unsigned char buffer to uint32_t
 //          (b).  Refenced from https://stackoverflow.com/questions/34943835/convert-four-bytes-to-integer-using-c
-            auto numberOfBytes =uint64_t (buffer[3] << 24 |
-                                          buffer[2] << 16 |
-                                          buffer[1] << 8 |
-                                          buffer[0]);
+            auto numberOfBytes = (uint64_t)( buffer[3] << 24 |
+                                             buffer[2] << 16 |
+                                             buffer[1] << 8 |
+                                             buffer[0]);
 
             if (numberOfBytes==0){
                 endOfFile = false;
@@ -151,7 +151,7 @@ namespace Potree{
                     pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
                     pos = pointcloud->points();
                     pointsLength = pos->Length();
-                    if(pointsLength == 0)
+                    if(pointsLength != 0)
                         return true;
                 }
 
@@ -167,9 +167,23 @@ namespace Potree{
 
                 else if(flatBufferFileType=="lanes"){
                     Lane= flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
+
                     rightLane = Lane->right();
                     rightLaneLength = rightLane->Length();
+                    leftLane = Lane->left();
+                    leftLaneLength = leftLane->Length();
+                    spine = Lane ->spine();
+                    spineLength = spine->Length();
                     return  true;}
+
+                    //    For the flatbuffer file of type Detections pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
+
+                else if(flatBufferFileType=="detections"){
+                    Detection= flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
+                    center= Detection->detections();
+                   detectionLength= center->Length();
+                    return true;
+                }
 
             }
         }
@@ -181,7 +195,24 @@ namespace Potree{
 
     }
 
+    bool FlatBufferReader::lanePoints() {
+        // Assign all the lane points into a vetor for every segment.
 
+        for (int leftLaneidx = 0; leftLaneidx < leftLaneLength; leftLaneidx++) {
+            auto leftLanePoints = leftLane->Get(leftLaneidx);
+            LanePoints.push_back({leftLanePoints->x(), leftLanePoints->y(), leftLanePoints->z()});
+        }
+
+        for (int rightLaneidx = 0; rightLaneidx < rightLaneLength; rightLaneidx++) {
+            auto rightLanePoints = rightLane->Get(rightLaneidx);
+            LanePoints.push_back({rightLanePoints->x(), rightLanePoints->y(), rightLanePoints->z()});
+        }
+
+        for (int spineidx = 0; spineidx < spineLength; spineidx++) {
+            auto spinePoints = spine->Get(spineidx);
+            LanePoints.push_back({spinePoints->x(), spinePoints->y(), spinePoints->z()});
+        }
+    }
 
     bool FlatBufferReader::centroid(){
         /** @brief This function is used to calculate the centroid and edges of every bounding box passed and creates a vector of struct “Points” then populates these points to the AABB function.
@@ -311,21 +342,30 @@ namespace Potree{
                 centroid();
             }
             else if(flatBufferFileType=="lanes") {
-                if (laneCounter < rightLaneLength) {
-                    auto rightLanePoints = rightLane->Get(laneCounter);
+
+                if (laneCounter ==0){
+                    lanePoints();
+
+                }
+
+                if (laneCounter < LanePoints.size()) {
+
+                    point.position.x = LanePoints[laneCounter].lane_x;
+                    point.position.y = LanePoints[laneCounter].lane_y;
+                    point.position.z = LanePoints[laneCounter].lane_z;
                     laneCounter++;
-                    point.position.x = rightLanePoints->x();
-                    point.position.y = rightLanePoints->y();
-                    point.position.z = rightLanePoints->z();
-                    return true;
-                } else if (laneCounter == rightLaneLength) {
+                    return true;}
+                else if (laneCounter == LanePoints.size()) {
                     laneCounter = 0;
+                    LanePoints.clear();
                     if (populatePointCloud()) {
-                        auto rightLanePoints = rightLane->Get(laneCounter);
+                        lanePoints();
+
+                        point.position.x = LanePoints[laneCounter].lane_x;
+                        point.position.y = LanePoints[laneCounter].lane_y;
+                        point.position.z = LanePoints[laneCounter].lane_z;
+//                        point.gpsTime = Lane->timestamp()->Get(laneCounter);
                         laneCounter++;
-                        point.position.x = rightLanePoints->x();
-                        point.position.y = rightLanePoints->y();
-                        point.position.z = rightLanePoints->z();
                         return true;
                     }
                     else{
@@ -335,8 +375,34 @@ namespace Potree{
                     }
                 }
             }
+            else if (flatBufferFileType=="detections" ){
 
-        }
+                if (detectionCounter < detectionLength) {
+                    auto detectionPoints = center->Get(detectionCounter);
+
+                    point.position.x = detectionPoints->centroid()->x();
+                    point.position.y = detectionPoints->centroid()->y();
+                    point.position.z = detectionPoints->centroid()->z();
+                    point.gpsTime = detectionPoints->timestamp();
+                    detectionCounter++;
+                    return true;
+                }
+                    //if end of 4 bytes reached, then read the next 4 bytes.
+                else if (detectionCounter == detectionLength) {
+                    detectionCounter = 0;
+                    if (populatePointCloud()) {
+                        auto detectionPoints = center->Get(detectionCounter);
+
+                        point.position.x = detectionPoints->centroid()->x();
+                        point.position.y = detectionPoints->centroid()->y();
+                        point.position.z = detectionPoints->centroid()->z();
+                        point.gpsTime = detectionPoints->timestamp();
+                        detectionCounter++;
+                        return true;
+                    }
+            }
+
+        }}
         return hasPoints;
     }
     Point FlatBufferReader::getPoint() {

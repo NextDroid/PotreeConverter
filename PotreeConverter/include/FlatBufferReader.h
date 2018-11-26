@@ -49,6 +49,7 @@ namespace Potree{
         bool populatePointCloud();
 
         bool centroid();
+        bool lanePoints();
 
 
         Point getPoint();
@@ -57,8 +58,8 @@ namespace Potree{
         long long numPoints();
 
         string flatBufferFileType;
-        int count,  counter, laneCounter;
-        int pointsLength, statesLength,rightLaneLength;
+        int count,  counter, laneCounter,detectionCounter;
+        int pointsLength, statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength;
         void close();
 
     private:
@@ -76,8 +77,9 @@ namespace Potree{
         const LIDARWORLD::PointCloud *pointcloud;
         const Flatbuffer::GroundTruth::State *states;
         const Flatbuffer::GroundTruth::Lane *Lane;
-        const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *bbox;
-        const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *rightLane;
+        const Flatbuffer::GroundTruth::Detections *Detection;
+        const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *bbox, *rightLane,*leftLane,*spine;
+        const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Detection>> *center;
         const Flatbuffer::GroundTruth::Track *track;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
 
@@ -91,8 +93,14 @@ namespace Potree{
             double bbox_z;
         };
 
-        std::vector<bboxPoints>Points;
 
+        struct LanePoints{
+            double lane_x;
+            double lane_y;
+            double lane_z;
+        };
+        std::vector<bboxPoints>Points;
+        std::vector<LanePoints> LanePoints;
 
     };
 }

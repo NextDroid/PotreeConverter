@@ -26,7 +26,7 @@
 #include <vector>
 #include <math.h>
 #include <fstream>
-#include "FlatBufferReader.hpp"
+#include "FlatBufferReader.h"
 
 
 using rapidjson::Document;
