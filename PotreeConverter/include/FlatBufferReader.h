@@ -44,7 +44,7 @@ namespace Potree{
 
         bool centroid();
         bool lanePoints();
-
+        bool egoDimensions();
 
         Point getPoint();
 
@@ -52,8 +52,8 @@ namespace Potree{
         int64_t numPoints();
 
         string flatBufferFileType;
-        int count,  counter, laneCounter,detectionCounter;
-        int pointsLength, statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength;
+        int count,counter,laneCounter,detectionCounter,rtkCounter;
+        int pointsLength,statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength,rtkLength;
         void close();
 
     private:
@@ -65,7 +65,6 @@ namespace Potree{
         ifstream *reader;
         Point point, p;
         uint64_t pointCount;
-        bool endOfFile;
         const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;
         const LIDARWORLD::PointCloud *pointcloud;
         const Flatbuffer::GroundTruth::State *states;
@@ -76,10 +75,12 @@ namespace Potree{
         const Flatbuffer::GroundTruth::Track *track;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
 
-        unsigned char *buffer;
+        const Flatbuffer::GroundTruth::Poses *rtk;
+
+        const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Pose>> *rtkPose;
+
         std::vector<char> buf2;
 
-        Vector3<double>Vertices;
         struct bboxPoints{
             double bbox_x;
             double bbox_y;
@@ -92,8 +93,14 @@ namespace Potree{
             double lane_y;
             double lane_z;
         };
+        struct egoPoints{
+            double ego_x;
+            double ego_y;
+            double ego_z;
+        };
         std::vector<bboxPoints>Points;
         std::vector<LanePoints> LanePoints;
+        std::vector<egoPoints>ego;
 
     };
 }

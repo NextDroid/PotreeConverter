@@ -2,7 +2,7 @@
  * @file  FlatBufferReader.cpp
  *
  * @brief Reads a Flatbuffer file with extension ‘.lidar’
- * @param[in] FlatBuffer file path along with string -b “point” or  -b “bbox”
+ * @param[in] FlatBuffer file path along with string -b “point” ||  -b “bbox” || -b "lanes" || -b "detections" || -b "rtk"
  *
  * @author Karthik Sivarama Krishnan
  * @date October 24, 2018, 10:36 AM
@@ -16,8 +16,6 @@
 #include <experimental/filesystem>
 #include <DataSchemas/LidarWorld_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
-
-
 
 #include "FlatBufferReader.h"
 #include "stuff.h"
@@ -37,12 +35,9 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0),  counter(0), laneCounter(0),detectionCounter(0){
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0),  counter(0), laneCounter(0),detectionCounter(0),rtkCounter(0){
         this->path = path;
         this->aabb = aabb;
-
-
-//        buffer = new unsigned char[4];
         flatBufferFileType= flatBufferType;
         std::cout<<"file type  points  for points and  bbox for bounding box points = " <<flatBufferFileType <<std::endl;
         std::cout << "Filepath = " << path << std::endl;
@@ -73,7 +68,6 @@ namespace Potree{
         while(readNextPoint()) {
 
             const Point p = getPoint();
-//            std::cout<<p<<std::endl;
             if (pointCount == 0) {
                 this->aabb = AABB(p.position);
             } else {
@@ -89,7 +83,6 @@ namespace Potree{
     }
 
     FlatBufferReader::~FlatBufferReader(){
-//        Delete reader, buffer and close
         close();
 
     }
@@ -97,7 +90,6 @@ namespace Potree{
     void FlatBufferReader::close(){
         if(reader != NULL){
             reader->close();
-
             delete reader;
             reader = NULL;
 
@@ -116,16 +108,22 @@ namespace Potree{
 
         try{
             uint8_t buffer[4];
+
             std::cout.precision(std::numeric_limits<double>::max_digits10);
             reader->read(reinterpret_cast<char *>(buffer), 4);
+            if (reader->eof()){
+                std::cerr << "Reader is at end of file" << std::endl;
+
+                return false;
+            }
+
 
 //          (a).  Converting 4 bytes unsigned char buffer to uint32_t
 //          (b).  Refenced from https://stackoverflow.com/questions/34943835/convert-four-bytes-to-integer-using-c
-            const uint32_t numberOfBytes = buffer[3] << 24 |
+            const uint64_t numberOfBytes = buffer[3] << 24 |
                                            buffer[2] << 16 |
                                            buffer[1] << 8 |
                                            buffer[0];
-
             if (numberOfBytes==0){
                 std::cout << "END OF FILE REACHED" << std::endl;
                 return false;
@@ -133,11 +131,7 @@ namespace Potree{
             else{
                 buf2.clear();
                 buf2.reserve(numberOfBytes);
-                if (reader->eof()){
-                    std::cerr << "Reader is at end of file" << std::endl;
 
-                    return false;
-                }
                 reader->read(&buf2[0], numberOfBytes);
 
                 //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
@@ -186,6 +180,13 @@ namespace Potree{
                     return true;
                 }
 
+                else if (flatBufferFileType=="rtk")
+                {
+                    rtk = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&buf2[0]);
+                    rtkPose = rtk->poses();
+                    rtkLength=rtkPose->Length();
+                    return  true;
+                }
             }
         }
         catch (std::exception& e) {
@@ -206,18 +207,15 @@ namespace Potree{
         // Assign all the lane points into a vetor for every segment.
 
         for (int leftLaneidx = 0; leftLaneidx < leftLaneLength; leftLaneidx++) {
-            auto leftLanePoints = leftLane->Get(leftLaneidx);
-            LanePoints.push_back({leftLanePoints->x(), leftLanePoints->y(), leftLanePoints->z()});
+            LanePoints.push_back({leftLane->Get(leftLaneidx)->x(), leftLane->Get(leftLaneidx)->y(), leftLane->Get(leftLaneidx)->z()});
         }
 
         for (int rightLaneidx = 0; rightLaneidx < rightLaneLength; rightLaneidx++) {
-            auto rightLanePoints = rightLane->Get(rightLaneidx);
-            LanePoints.push_back({rightLanePoints->x(), rightLanePoints->y(), rightLanePoints->z()});
+            LanePoints.push_back({rightLane->Get(rightLaneidx)->x(), rightLane->Get(rightLaneidx)->y(), rightLane->Get(rightLaneidx)->z()});
         }
 
         for (int spineidx = 0; spineidx < spineLength; spineidx++) {
-            auto spinePoints = spine->Get(spineidx);
-            LanePoints.push_back({spinePoints->x(), spinePoints->y(), spinePoints->z()});
+            LanePoints.push_back({spine->Get(spineidx)->x(), spine->Get(spineidx)->y(), spine->Get(spineidx)->z()});
         }
     }
 
@@ -279,12 +277,29 @@ namespace Potree{
                 counter=0;
                 populatePointCloud();
                 centroid();
-
             }
         }
 
 
     }
+
+
+
+    bool FlatBufferReader::egoDimensions() {
+
+        for(int rtkcounter=0; rtkcounter<rtkLength;rtkcounter++)
+        { auto rtkPoints = rtkPose->Get(rtkcounter);
+            ego.push_back({rtkPoints->pos()->x(),rtkPoints->pos()->y(),rtkPoints->pos()->z()});
+            ego.push_back({-rtkPoints->pos()->y(),rtkPoints->pos()->x()-1.165,rtkPoints->pos()->z()-10.553});
+            ego.push_back({rtkPoints->pos()->y(),-rtkPoints->pos()->x()+2.435,rtkPoints->pos()->z()-10.553});
+
+        }
+
+    }
+
+
+
+
 
     bool FlatBufferReader::readNextPoint() {
         /** @brief This is the main driver function which checks for the points in the file and populate the points to the AABB function.
@@ -344,6 +359,7 @@ namespace Potree{
             else if (flatBufferFileType=="bbox" ) {
 
                 centroid();
+
             }
             else if(flatBufferFileType=="lanes") {
 
@@ -357,6 +373,7 @@ namespace Potree{
                     point.position.x = LanePoints[laneCounter].lane_x;
                     point.position.y = LanePoints[laneCounter].lane_y;
                     point.position.z = LanePoints[laneCounter].lane_z;
+//                    point.gpsTime = Lane->timestamp()->Get(laneCounter);
                     laneCounter++;
                     return true;}
                 else if (laneCounter == LanePoints.size()) {
@@ -404,8 +421,46 @@ namespace Potree{
                         return true;
                     }
                 }
+            }
+            else if (flatBufferFileType=="rtk" ) {
 
-            }}
+                // check if the end of 4 bytes segment reached
+                if (rtkCounter < rtkLength && rtkCounter==0) {
+                    egoDimensions();
+                    point.position.x = ego[rtkCounter].ego_x;
+                    point.position.y = ego[rtkCounter].ego_y;
+                    point.position.z = ego[rtkCounter].ego_z;
+//                    point.gpsTime = rtk->poses()->Get(rtkCounter)->timestamp();
+                    rtkCounter++;
+                    return true;
+                }
+                    //if end of 4 bytes reached, then read the next 4 bytes.
+                else if(rtkCounter < ego.size()){
+                    point.position.x = ego[rtkCounter].ego_x;
+                    point.position.y = ego[rtkCounter].ego_y;
+                    point.position.z = ego[rtkCounter].ego_z;
+//                    point.gpsTime = rtk->poses()->Get(rtkCounter)->timestamp();
+                    rtkCounter++;
+                    return true;
+                }
+                else if (rtkCounter == ego.size()) {
+                    rtkCounter = 0;
+                    if (populatePointCloud()) {
+                        egoDimensions();
+                        point.position.x = ego[rtkCounter].ego_x;
+                        point.position.y = ego[rtkCounter].ego_y;
+                        point.position.z = ego[rtkCounter].ego_z;
+//                        point.gpsTime = rtkPoints->timestamp();
+                        return true;
+                    }
+                    else{
+
+                        std::cout << "There are no More Pointcloud Points Left in the file" << std::endl;
+                        return false;
+                    }
+                }
+            }
+        }
         return hasPoints;
     }
     Point FlatBufferReader::getPoint() {
