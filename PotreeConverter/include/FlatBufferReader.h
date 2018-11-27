@@ -62,7 +62,8 @@ namespace Potree{
         string path;
         vector<string> files;
         vector<string>::iterator currentFile;
-        ifstream *reader;
+        std::unique_ptr<ifstream>reader;
+
         Point point, p;
         uint64_t pointCount;
         const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;

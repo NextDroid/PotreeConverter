@@ -53,7 +53,7 @@ namespace Potree{
             files.push_back(path);
         }
         currentFile = files.begin();
-        reader = new ifstream(*currentFile, ios::in | ios::binary);
+        reader.reset(new ifstream(*currentFile, ios::in | ios::binary));
 
 //     Check if there are any points.
 
@@ -78,7 +78,7 @@ namespace Potree{
         reader->clear();
         reader->seekg(0, reader->beg);
         currentFile = files.begin();
-        reader = new ifstream(*currentFile, ios::in | ios::binary);
+        reader.reset(new ifstream(*currentFile, ios::in | ios::binary));
 
     }
 
@@ -88,11 +88,10 @@ namespace Potree{
     }
 
     void FlatBufferReader::close(){
+
         if(reader != NULL){
             reader->close();
-            delete reader;
-            reader = NULL;
-
+            reader.reset();
         }
     }
 
@@ -316,9 +315,7 @@ namespace Potree{
 
             if (currentFile != files.end()) {
                 reader->close();
-                delete reader;
-                reader = NULL;
-                reader = new ifstream(*currentFile, ios::in | ios::binary);
+                reader.reset(new ifstream(*currentFile, ios::in | ios::binary));
                 hasPoints = reader->good();
             }
         }
