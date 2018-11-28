@@ -96,7 +96,7 @@ namespace Potree{
         string flatBufferFileType;
         int count,counter,laneCounter,detectionCounter,rtkCounter;
         int pointsLength,statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength,rtkLength;
-        void close();
+        void close()  override ;
     };
 }
 #endif //VERITAS_FLATBUFFERREADER_H

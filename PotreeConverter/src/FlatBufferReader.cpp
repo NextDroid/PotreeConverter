@@ -87,7 +87,7 @@ namespace Potree{
     }
 
     FlatBufferReader::~FlatBufferReader(){
-       close();
+       close() ;
 
     }
 
