@@ -39,45 +39,21 @@ namespace Potree{
 
         ~FlatBufferReader();
 
-        bool readNextPoint();
-        bool populatePointCloud();
-
-        bool centroid();
-        bool lanePoints();
-        bool egoDimensions();
-
-        Point getPoint();
-
-        AABB getAABB();
-        int64_t numPoints();
-
-        string flatBufferFileType;
-        int count,counter,laneCounter,detectionCounter,rtkCounter;
-        int pointsLength,statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength,rtkLength;
-        void close();
 
     private:
         AABB aabb;
-        double scale;
+
         string path;
         vector<string> files;
         vector<string>::iterator currentFile;
         std::unique_ptr<ifstream>reader;
 
-        Point point, p;
+        Point point;
         uint64_t pointCount;
         const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;
-        const LIDARWORLD::PointCloud *pointcloud;
-        const Flatbuffer::GroundTruth::State *states;
-        const Flatbuffer::GroundTruth::Lane *Lane;
-        const Flatbuffer::GroundTruth::Detections *Detection;
         const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *> *bbox, *rightLane,*leftLane,*spine;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Detection>> *center;
-        const Flatbuffer::GroundTruth::Track *track;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
-
-        const Flatbuffer::GroundTruth::Poses *rtk;
-
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Pose>> *rtkPose;
 
         std::vector<char> buf2;
@@ -98,11 +74,29 @@ namespace Potree{
             double ego_x;
             double ego_y;
             double ego_z;
+            double ego_time;
         };
         std::vector<bboxPoints>Points;
         std::vector<LanePoints> LanePoints;
         std::vector<egoPoints>ego;
 
+
+        bool readNextPoint();
+        bool populatePointCloud();
+
+        bool centroid();
+        bool lanePoints();
+        bool egoDimensions();
+
+        Point getPoint();
+
+        AABB getAABB();
+        int64_t numPoints();
+
+        string flatBufferFileType;
+        int count,counter,laneCounter,detectionCounter,rtkCounter;
+        int pointsLength,statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength,rtkLength;
+        void close();
     };
 }
 #endif //VERITAS_FLATBUFFERREADER_H

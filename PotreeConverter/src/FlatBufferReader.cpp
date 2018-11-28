@@ -35,34 +35,38 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0),  counter(0), laneCounter(0),detectionCounter(0),rtkCounter(0){
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0), counter(0), laneCounter(0), detectionCounter(0), rtkCounter(0) {
         this->path = path;
         this->aabb = aabb;
-        flatBufferFileType= flatBufferType;
-        std::cout<<"file type  points  for points and  bbox for bounding box points = " <<flatBufferFileType <<std::endl;
+        flatBufferFileType = flatBufferType;
+        std::cout<<" The FlatBuffer file type is  = " << flatBufferFileType << std::endl;
         std::cout << "Filepath = " << path << std::endl;
 
-        if(fs::is_directory(path)){
-            for(fs::directory_iterator it(path); it != fs::directory_iterator(); it++){
+        if (fs::is_directory(path)) {
+            for (fs::directory_iterator it(path); it != fs::directory_iterator(); it++) {
+
                 fs::path filepath = it->path();
-                if(fs::is_regular_file(filepath)){
+
+                if (fs::is_regular_file(filepath)) {
                     files.push_back(filepath.string());
                 }
             }
-        }else{
+        }
+        else {
             files.push_back(path);
         }
-        currentFile = files.begin();
-        reader.reset(new ifstream(*currentFile, ios::in | ios::binary));
 
-//     Check if there are any points.
+        currentFile = files.begin();
+        reader = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+
+        //     Check if there are any points.
 
         bool firstCloudPopulated = populatePointCloud();
         if (!firstCloudPopulated) {
             std::cerr << "Could not populate first cloud" << std::endl;
         }
 
-//      Calculate AABB: for every point present in the flatbuffer file
+        //      Calculate AABB: for every point available in the flatbuffer file
 
         pointCount = 0;
         while(readNextPoint()) {
@@ -70,7 +74,8 @@ namespace Potree{
             const Point p = getPoint();
             if (pointCount == 0) {
                 this->aabb = AABB(p.position);
-            } else {
+            }
+            else {
                 this->aabb.update(p.position);
             }
             pointCount++;
@@ -78,21 +83,17 @@ namespace Potree{
         reader->clear();
         reader->seekg(0, reader->beg);
         currentFile = files.begin();
-        reader.reset(new ifstream(*currentFile, ios::in | ios::binary));
-
+        reader = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
     }
 
     FlatBufferReader::~FlatBufferReader(){
-        close();
+       close();
 
     }
 
     void FlatBufferReader::close(){
 
-        if(reader != NULL){
-            reader->close();
-            reader.reset();
-        }
+     // Stub Function. close() function is declared as virtual in the abstract class "PointReader"
     }
 
     int64_t FlatBufferReader::numPoints(){
@@ -110,24 +111,22 @@ namespace Potree{
 
             std::cout.precision(std::numeric_limits<double>::max_digits10);
             reader->read(reinterpret_cast<char *>(buffer), 4);
-            if (reader->eof()){
+            if (reader->eof()) {
                 std::cerr << "Reader is at end of file" << std::endl;
 
                 return false;
             }
 
 
-//          (a).  Converting 4 bytes unsigned char buffer to uint32_t
-//          (b).  Refenced from https://stackoverflow.com/questions/34943835/convert-four-bytes-to-integer-using-c
             const uint64_t numberOfBytes = buffer[3] << 24 |
                                            buffer[2] << 16 |
                                            buffer[1] << 8 |
                                            buffer[0];
-            if (numberOfBytes==0){
+            if (numberOfBytes == 0) {
                 std::cout << "END OF FILE REACHED" << std::endl;
                 return false;
             }
-            else{
+            else {
                 buf2.clear();
                 buf2.reserve(numberOfBytes);
 
@@ -135,55 +134,57 @@ namespace Potree{
 
                 //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
 
-                if (flatBufferFileType== "point")
+                if (flatBufferFileType == "point")
                 {
-                    pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
-                    pos = pointcloud->points();
-                    pointsLength = pos->Length();
-                    if(pointsLength != 0)
+                    auto pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
+                    pos             = pointcloud->points();
+                    pointsLength    = pos->Length();
+                    if (pointsLength != 0)
                         return true;
                 }
 
                     //    For the flatbuffer file of type track bounding box pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
-                else if (flatBufferFileType=="bbox")
+                else if (flatBufferFileType == "bbox")
                 {
-                    track = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
-                    statesFb = track->states();
-                    statesLength = statesFb->Length();
+                    auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
+                    statesFb       = track->states();
+                    statesLength   = statesFb->Length();
                     return  true;
                 }
 
                     //    For the flatbuffer file of type Lanes pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
-                else if(flatBufferFileType=="lanes")
+                else if (flatBufferFileType == "lanes")
                 {
-                    Lane= flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
-
-                    rightLane = Lane->right();
+                    auto Lane       = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
+                    rightLane       = Lane->right();
+                    leftLane        = Lane->left();
+                    spine           = Lane ->spine();
                     rightLaneLength = rightLane->Length();
-                    leftLane = Lane->left();
-                    leftLaneLength = leftLane->Length();
-                    spine = Lane ->spine();
-                    spineLength = spine->Length();
+                    leftLaneLength  = leftLane->Length();
+                    spineLength     = spine->Length();
                     return  true;
                 }
 
                     //    For the flatbuffer file of type Detections pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
-                else if(flatBufferFileType=="detections")
+                else if (flatBufferFileType == "detections")
                 {
-                    Detection= flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
-                    center= Detection->detections();
-                    detectionLength= center->Length();
+                    auto Detection   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
+                    center           = Detection->detections();
+                    detectionLength  = center->Length();
                     return true;
                 }
 
-                else if (flatBufferFileType=="rtk")
+                    //    For the flatbuffer file of type rtk pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
+
+                else if (flatBufferFileType == "rtk")
                 {
-                    rtk = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&buf2[0]);
-                    rtkPose = rtk->poses();
-                    rtkLength=rtkPose->Length();
+                    auto  rtk   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&buf2[0]);
+                    rtkPose     = rtk->poses();
+                    rtkLength   = rtkPose->Length();
+
                     return  true;
                 }
             }
@@ -219,19 +220,22 @@ namespace Potree{
     }
 
     bool FlatBufferReader::centroid(){
+
         /** @brief This function is used to calculate the centroid and edges of every bounding box passed and creates a vector of struct “Points” then populates these points to the AABB function.
          *  @param[in] reader with 4 bytes of data
          *  @return bool
          */
 
+
         double timeStamps;
-        if(counter==0){
+        if (counter == 0) {
             auto &state = *statesFb;
-            for(int stateIdx=0;stateIdx<statesLength;stateIdx++) {
-                bbox = state[stateIdx]->bbox();
+
+            for (int stateIdx = 0;stateIdx < statesLength;stateIdx++) {
+
+                bbox          = state[stateIdx]->bbox();
                 auto bbox_len = bbox->Length();
-                timeStamps = state[stateIdx]->timestamps();
-                auto Yaw = state[stateIdx]->yaw();
+                timeStamps    = state[stateIdx]->timestamps();
 
                 //Reads all the track bounding box vertices points
 
@@ -256,7 +260,7 @@ namespace Potree{
             point.position.x = Points[counter].bbox_x;
             point.position.y = Points[counter].bbox_y;
             point.position.z = Points[counter].bbox_z;
-            point.gpsTime = timeStamps;
+            point.gpsTime    = timeStamps - 1495189467.6400001;  //Hardcoded values should be fixed in the Potree Visualizer
             counter++;
             return true;
 
@@ -266,14 +270,14 @@ namespace Potree{
                 point.position.x = Points[counter].bbox_x;
                 point.position.y = Points[counter].bbox_y;
                 point.position.z = Points[counter].bbox_z;
-                point.gpsTime = timeStamps;
+                point.gpsTime    = timeStamps - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
                 counter++;
                 return true;
 
             }
-            else{
+            else {
                 Points.clear();
-                counter=0;
+                counter = 0;
                 populatePointCloud();
                 centroid();
             }
@@ -285,12 +289,15 @@ namespace Potree{
 
 
     bool FlatBufferReader::egoDimensions() {
+        /*    WORK IN PROGRESS
+         *
+         */
 
-        for(int rtkcounter=0; rtkcounter<rtkLength;rtkcounter++)
+        for(int rtkcounter = 0; rtkcounter < rtkLength; rtkcounter++)
         { auto rtkPoints = rtkPose->Get(rtkcounter);
-            ego.push_back({rtkPoints->pos()->x(),rtkPoints->pos()->y(),rtkPoints->pos()->z()});
-            ego.push_back({-rtkPoints->pos()->y(),rtkPoints->pos()->x()-1.165,rtkPoints->pos()->z()-10.553});
-            ego.push_back({rtkPoints->pos()->y(),-rtkPoints->pos()->x()+2.435,rtkPoints->pos()->z()-10.553});
+            ego.push_back({rtkPoints->pos()->x(),  rtkPoints->pos()->y(),  rtkPoints->pos()->z(), rtkPoints->timestamp()});
+            ego.push_back({-rtkPoints->pos()->y(), rtkPoints->pos()->x()-1.165, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
+            ego.push_back({rtkPoints->pos()->y(), -rtkPoints->pos()->x()+2.435, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
 
         }
 
@@ -308,59 +315,49 @@ namespace Potree{
 
 
         bool hasPoints = reader->good();
-
-
-        if (!hasPoints) {
-            currentFile++;
-
-            if (currentFile != files.end()) {
-                reader->close();
-                reader.reset(new ifstream(*currentFile, ios::in | ios::binary));
-                hasPoints = reader->good();
-            }
-        }
-
         if(hasPoints ) {
-            if (flatBufferFileType=="point" ) {
+            if (flatBufferFileType == "point" ) {
                 // check if the end of 4 bytes segment reached
+
                 if (count < pointsLength) {
-                    auto fbPoints = pos->Get(count);
+                    auto fbPoints    = pos->Get(count);
                     count++;
                     point.position.x = fbPoints->x();
                     point.position.y = fbPoints->y();
                     point.position.z = fbPoints->z();
-                    point.gpsTime = fbPoints->timestamp();
-                    point.intensity = fbPoints->intensity();
+                    point.gpsTime    = fbPoints->timestamp();
+                    point.intensity  = fbPoints->intensity();
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
+
                 else if (count == pointsLength) {
                     count = 0;
                     if (populatePointCloud()) {
-                        auto fbPoints = pos->Get(count);
+                        auto fbPoints    = pos->Get(count);
                         count++;
                         point.position.x = fbPoints->x();
                         point.position.y = fbPoints->y();
                         point.position.z = fbPoints->z();
-                        point.gpsTime = fbPoints->timestamp();
-                        point.intensity = fbPoints->intensity();
+                        point.gpsTime    = fbPoints->timestamp();
+                        point.intensity  = fbPoints->intensity();
                         return true;
                     }
-                    else{
+                    else {
 
                         std::cout << "There are no More Pointcloud Points Left in the file" << std::endl;
                         return false;
                     }
                 }
             }
-            else if (flatBufferFileType=="bbox" ) {
+            else if (flatBufferFileType == "bbox" ) {
 
                 centroid();
 
             }
-            else if(flatBufferFileType=="lanes") {
+            else if (flatBufferFileType == "lanes") {
 
-                if (laneCounter ==0){
+                if (laneCounter == 0) {
                     lanePoints();
 
                 }
@@ -372,7 +369,8 @@ namespace Potree{
                     point.position.z = LanePoints[laneCounter].lane_z;
 //                    point.gpsTime = Lane->timestamp()->Get(laneCounter);
                     laneCounter++;
-                    return true;}
+                    return true;
+                }
                 else if (laneCounter == LanePoints.size()) {
                     laneCounter = 0;
                     LanePoints.clear();
@@ -386,13 +384,13 @@ namespace Potree{
                         laneCounter++;
                         return true;
                     }
-                    else{
+                    else {
                         std::cout << "There are no More Lane Points Left in the file" << std::endl;
                         return false;
                     }
                 }
             }
-            else if (flatBufferFileType=="detections" ){
+            else if (flatBufferFileType == "detections" ) {
 
                 if (detectionCounter < detectionLength) {
                     auto detectionPoints = center->Get(detectionCounter);
@@ -400,11 +398,13 @@ namespace Potree{
                     point.position.x = detectionPoints->centroid()->x();
                     point.position.y = detectionPoints->centroid()->y();
                     point.position.z = detectionPoints->centroid()->z();
-                    point.gpsTime = detectionPoints->timestamp();
+                    point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                    std::cout<<point.gpsTime<<std::endl;
                     detectionCounter++;
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
+
                 else if (detectionCounter == detectionLength) {
                     detectionCounter = 0;
                     if (populatePointCloud()) {
@@ -413,13 +413,14 @@ namespace Potree{
                         point.position.x = detectionPoints->centroid()->x();
                         point.position.y = detectionPoints->centroid()->y();
                         point.position.z = detectionPoints->centroid()->z();
-                        point.gpsTime = detectionPoints->timestamp();
+                        point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+//                        std::cout<<point.gpsTime<<std::endl;
                         detectionCounter++;
                         return true;
                     }
                 }
             }
-            else if (flatBufferFileType=="rtk" ) {
+            else if (flatBufferFileType == "rtk" ) {
 
                 // check if the end of 4 bytes segment reached
                 if (rtkCounter < rtkLength && rtkCounter==0) {
@@ -427,16 +428,16 @@ namespace Potree{
                     point.position.x = ego[rtkCounter].ego_x;
                     point.position.y = ego[rtkCounter].ego_y;
                     point.position.z = ego[rtkCounter].ego_z;
-//                    point.gpsTime = rtk->poses()->Get(rtkCounter)->timestamp();
+                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
                     rtkCounter++;
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
-                else if(rtkCounter < ego.size()){
+                else if (rtkCounter < ego.size()) {
                     point.position.x = ego[rtkCounter].ego_x;
                     point.position.y = ego[rtkCounter].ego_y;
                     point.position.z = ego[rtkCounter].ego_z;
-//                    point.gpsTime = rtk->poses()->Get(rtkCounter)->timestamp();
+                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
                     rtkCounter++;
                     return true;
                 }
@@ -447,10 +448,10 @@ namespace Potree{
                         point.position.x = ego[rtkCounter].ego_x;
                         point.position.y = ego[rtkCounter].ego_y;
                         point.position.z = ego[rtkCounter].ego_z;
-//                        point.gpsTime = rtkPoints->timestamp();
+                        point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
                         return true;
                     }
-                    else{
+                    else {
 
                         std::cout << "There are no More Pointcloud Points Left in the file" << std::endl;
                         return false;
@@ -458,9 +459,17 @@ namespace Potree{
                 }
             }
         }
+        else  {
+            currentFile++;
+
+            if (currentFile != files.end()) {
+                reader->close();
+                reader = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+                hasPoints = reader->good();
+            }
+        }
         return hasPoints;
-    }
-    Point FlatBufferReader::getPoint() {
+    }    Point FlatBufferReader::getPoint() {
         return point;
     }
     AABB FlatBufferReader::getAABB() {
