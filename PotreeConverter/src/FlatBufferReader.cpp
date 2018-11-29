@@ -38,9 +38,11 @@ namespace Potree{
 
 
     FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0), counter(0), laneCounter(0), detectionCounter(0), rtkCounter(0) {
-        this->path = path;
-        this->aabb = aabb;
-        flatBufferFileType = flatBufferType;
+
+        this->path               = path;
+        this->aabb               = aabb;
+        this->flatBufferFileType = flatBufferType;
+
         std::cout<<" The FlatBuffer file type is  = " << flatBufferFileType << std::endl;
         std::cout << "Filepath = " << path << std::endl;
 
@@ -59,7 +61,7 @@ namespace Potree{
         }
 
         currentFile = files.begin();
-        reader = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+        reader      = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
 
         //     Check if there are any points.
 
@@ -85,7 +87,7 @@ namespace Potree{
         reader->clear();
         reader->seekg(0, reader->beg);
         currentFile = files.begin();
-        reader = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+        reader      = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
     }
 
     FlatBufferReader::~FlatBufferReader(){
@@ -95,7 +97,7 @@ namespace Potree{
 
     void FlatBufferReader::close(){
 
-            // Stub Function. close() function is declared as virtual in the abstract class "PointReader"
+        // Stub Function. close() function is declared as virtual in the abstract class "PointReader"
     }
 
     int64_t FlatBufferReader::numPoints(){
@@ -125,67 +127,67 @@ namespace Potree{
                                            buffer[1] << 8 |
                                            buffer[0];
 
-                buf2.clear();
-                buf2.reserve(numberOfBytes);
+            buf2.clear();
+            buf2.reserve(numberOfBytes);
 
-                reader->read(&buf2[0], numberOfBytes);
+            reader->read(&buf2[0], numberOfBytes);
 
-                //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
+            //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
 
-                if (flatBufferFileType == "point")
-                {
-                    auto pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
-                    pos             = pointcloud->points();
-                    pointsLength    = pos->Length();
-                    if (pointsLength != 0)
-                        return true;
-                }
-
-                    //    For the flatbuffer file of type track bounding box pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
-
-                else if (flatBufferFileType == "bbox")
-                {
-                    auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
-                    statesFb       = track->states();
-                    statesLength   = statesFb->Length();
-                    return  true;
-                }
-
-                    //    For the flatbuffer file of type Lanes pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
-
-                else if (flatBufferFileType == "lanes")
-                {
-                    auto Lane       = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
-                    rightLane       = Lane->right();
-                    leftLane        = Lane->left();
-                    spine           = Lane ->spine();
-                    rightLaneLength = rightLane->Length();
-                    leftLaneLength  = leftLane->Length();
-                    spineLength     = spine->Length();
-                    return  true;
-                }
-
-                    //    For the flatbuffer file of type Detections pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
-
-                else if (flatBufferFileType == "detections")
-                {
-                    auto Detection   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
-                    center           = Detection->detections();
-                    detectionLength  = center->Length();
+            if (flatBufferFileType == "point")
+            {
+                auto pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
+                pos             = pointcloud->points();
+                pointsLength    = pos->Length();
+                if (pointsLength != 0)
                     return true;
-                }
-
-                    //    For the flatbuffer file of type rtk pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
-
-                else if (flatBufferFileType == "rtk")
-                {
-                    auto  rtk   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&buf2[0]);
-                    rtkPose     = rtk->poses();
-                    rtkLength   = rtkPose->Length();
-
-                    return  true;
-                }
             }
+
+                //    For the flatbuffer file of type track bounding box pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
+
+            else if (flatBufferFileType == "bbox")
+            {
+                auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
+                statesFb       = track->states();
+                statesLength   = statesFb->Length();
+                return  true;
+            }
+
+                //    For the flatbuffer file of type Lanes pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
+
+            else if (flatBufferFileType == "lanes")
+            {
+                auto Lane       = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
+                rightLane       = Lane->right();
+                leftLane        = Lane->left();
+                spine           = Lane ->spine();
+                rightLaneLength = rightLane->Length();
+                leftLaneLength  = leftLane->Length();
+                spineLength     = spine->Length();
+                return  true;
+            }
+
+                //    For the flatbuffer file of type Detections pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
+
+            else if (flatBufferFileType == "detections")
+            {
+                auto Detection   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
+                center           = Detection->detections();
+                detectionLength  = center->Length();
+                return true;
+            }
+
+                //    For the flatbuffer file of type rtk pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
+
+            else if (flatBufferFileType == "rtk")
+            {
+                auto  rtk   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&buf2[0]);
+                rtkPose     = rtk->poses();
+                rtkLength   = rtkPose->Length();
+
+                return  true;
+            }
+        }
 
         catch (std::exception& e) {
 
