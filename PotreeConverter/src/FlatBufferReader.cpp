@@ -16,6 +16,8 @@
 #include <experimental/filesystem>
 #include <DataSchemas/LidarWorld_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Eigen>
 
 #include "FlatBufferReader.h"
 #include "stuff.h"
@@ -66,7 +68,7 @@ namespace Potree{
             std::cerr << "Could not populate first cloud" << std::endl;
         }
 
-        //      Calculate AABB: for every point available in the flatbuffer file
+        //      Calculate AABB: for every point available in the flatbuffer file override
 
         pointCount = 0;
         while(readNextPoint()) {
@@ -87,13 +89,13 @@ namespace Potree{
     }
 
     FlatBufferReader::~FlatBufferReader(){
-       close() ;
+        close() ;
 
     }
 
     void FlatBufferReader::close(){
 
-     // Stub Function. close() function is declared as virtual in the abstract class "PointReader"
+            // Stub Function. close() function is declared as virtual in the abstract class "PointReader"
     }
 
     int64_t FlatBufferReader::numPoints(){
@@ -122,11 +124,7 @@ namespace Potree{
                                            buffer[2] << 16 |
                                            buffer[1] << 8 |
                                            buffer[0];
-            if (numberOfBytes == 0) {
-                std::cout << "END OF FILE REACHED" << std::endl;
-                return false;
-            }
-            else {
+
                 buf2.clear();
                 buf2.reserve(numberOfBytes);
 
@@ -188,7 +186,7 @@ namespace Potree{
                     return  true;
                 }
             }
-        }
+
         catch (std::exception& e) {
 
             std::cout << "No More Points Left" << std::endl;
@@ -288,16 +286,59 @@ namespace Potree{
 
 
 
+    Eigen::Quaterniond
+    euler2Quaternion( const double roll,
+                      const double pitch,
+                      const double yaw ) {
+        // TODO check yaw pitch roll order required in use case
+        Eigen::AngleAxisd rollAngle(roll, Eigen::Vector3d::UnitX());
+        Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitY());
+        Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
+
+        Eigen::Quaterniond q = yawAngle *pitchAngle *rollAngle;
+        return q;
+    }
+
+    Eigen::Matrix4d getTxMat(Eigen::Vector4d dx, Eigen::Vector3d dTheta){
+        Eigen::Matrix3d rot_mat = euler2Quaternion(dTheta.x(),dTheta.y(),dTheta.z()).toRotationMatrix();
+        Eigen::Matrix4d Trans; // Transformation matrix
+        Trans.setIdentity();
+        Trans.block<3,3>(0,0) = rot_mat;
+        Trans.rightCols<1>() = dx;
+
+        return Trans;
+    }
+
     bool FlatBufferReader::egoDimensions() {
         /*    WORK IN PROGRESS
          *
          */
+        Eigen::Vector4d New, New2,RotatedPoint,Rotated;
+        Eigen::Vector3d Yaw;
 
         for(int rtkcounter = 0; rtkcounter < rtkLength; rtkcounter++)
         { auto rtkPoints = rtkPose->Get(rtkcounter);
             ego.push_back({rtkPoints->pos()->x(),  rtkPoints->pos()->y(),  rtkPoints->pos()->z(), rtkPoints->timestamp()});
-            ego.push_back({-rtkPoints->pos()->y(), rtkPoints->pos()->x()-1.165, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
-            ego.push_back({rtkPoints->pos()->y(), -rtkPoints->pos()->x()+2.435, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
+//            ego.push_back({-rtkPoints->pos()->y(), rtkPoints->pos()->x()-1.165, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
+//            ego.push_back({rtkPoints->pos()->y(), -rtkPoints->pos()->x()+2.435, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
+
+            New(0) = (rtkPoints->pos()->x()+2.435)-0.457;
+            New(1) = rtkPoints->pos()->y()-0.740;
+            New(2) = rtkPoints->pos()->z();
+            New(3) = 1;
+            Yaw(0) = 0;
+            Yaw(1) = 0;
+            Yaw(2) = rtkPose->Get(rtkcounter)->orientation()->z();
+
+            auto RotationMatrix=  getTxMat(New,Yaw);
+            RotatedPoint= (RotationMatrix * New);
+            ego.push_back({RotatedPoint(0)+0.457,RotatedPoint(1)+0.740,RotatedPoint(2),rtkPoints->timestamp()});
+//            New2(0) = rtkPoints->pos()->x()+2.435;
+//            New2(1) = rtkPoints->pos()->y();
+//            New2(2) = rtkPoints->pos()->z();
+//            auto Rotation=  getTxMat(New2,Yaw);
+//            Rotated= (Rotation * New2);
+//            ego.push_back({Rotated(0),Rotated(1),Rotated(2),rtkPoints->timestamp()});
 
         }
 
