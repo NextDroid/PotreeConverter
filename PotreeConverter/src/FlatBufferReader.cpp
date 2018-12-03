@@ -344,30 +344,30 @@ namespace Potree{
             for (frontPoint(1) = 0; frontPoint(1) > -1; frontPoint(1) -= 0.2) {
                 for (frontPoint(0)= 2.2;frontPoint(0)<3;frontPoint(0)+=0.2){
 //                    std::cout<<frontPoint(0);
-                centeroid = (rearPoint + frontPoint) / 2;
+                centroid = (rearPoint + frontPoint) / 2;
 
                 //Subtracting the centroid
-                auto centroidrearPoint = rearPoint - centeroid;
-                auto centroidfrontPoint = frontPoint - centeroid;
+                auto centroidRearPoint = rearPoint - centroid;
+                auto centroidFrontPoint = frontPoint - centroid;
 
-                rtk = rtk - centeroid;
+                rtk = rtk - centroid;
 
                 //applying rotations
-                auto rearRotationMatrix = getTxMat(centroidrearPoint, Yaw);
-                auto rotatedFrontPoint = (rearRotationMatrix * centeroid);
-                auto frontRotationMatrix = getTxMat(centroidfrontPoint, Yaw);
-                auto rotatedRearPoint = (frontRotationMatrix * centeroid);
-//                std::cout<<"rear rotations"<<rearPoint<<std::endl;
+                auto rearRotationMatrix = getTxMat(centroidRearPoint, Yaw);
+                auto rotatedFrontPoint = (rearRotationMatrix * centroid);
+                auto frontRotationMatrix = getTxMat(centroidFrontPoint, Yaw);
+                auto rotatedRearPoint = (frontRotationMatrix * centroid);
+
 
                 auto rtkRotationMatrix = getTxMat(rtk, Yaw);
-                auto rotatedRtk = (rtkRotationMatrix * centeroid);
-                auto centroidRotationMatrix = getTxMat(centeroid, Yaw);
-                auto rotatedCenteroid = (centroidRotationMatrix * centeroid);
+                auto rotatedRtk = (rtkRotationMatrix * centroid);
+                auto centroidRotationMatrix = getTxMat(centroid, Yaw);
+                auto rotatedCenteroid = (centroidRotationMatrix * centroid);
 
                 //subtract rtk
 
                 auto rtkSubtractedCenteroid = rotatedCenteroid - rotatedRtk;
-                auto rtkSubtracted = rotatedrtk - rotatedRtk;
+                auto rtkSubtracted = rotatedRtk - rotatedRtk;
                 auto rtkSubtractedFrontPoint = rotatedFrontPoint - rotatedRtk; //change here karthik
                 auto rtkSubtractedRearPoint = rotatedRearPoint - rotatedRtk;
 
