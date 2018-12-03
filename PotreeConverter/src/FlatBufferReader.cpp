@@ -354,36 +354,36 @@ namespace Potree{
 
                 //applying rotations
                 auto rearRotationMatrix = getTxMat(centroidrearPoint, Yaw);
-                auto rotatedfrontPoint = (rearRotationMatrix * centeroid);
+                auto rotatedFrontPoint = (rearRotationMatrix * centeroid);
                 auto frontRotationMatrix = getTxMat(centroidfrontPoint, Yaw);
-                auto rotatedrearPoint = (frontRotationMatrix * centeroid);
+                auto rotatedRearPoint = (frontRotationMatrix * centeroid);
 //                std::cout<<"rear rotations"<<rearPoint<<std::endl;
 
                 auto rtkRotationMatrix = getTxMat(rtk, Yaw);
-                auto rotatedrtk = (rtkRotationMatrix * centeroid);
+                auto rotatedRtk = (rtkRotationMatrix * centeroid);
                 auto centroidRotationMatrix = getTxMat(centeroid, Yaw);
-                auto rotatedcenteroid = (centroidRotationMatrix * centeroid);
+                auto rotatedCenteroid = (centroidRotationMatrix * centeroid);
 
                 //subtract rtk
 
-                auto rtksubtractedcenteroid = rotatedcenteroid - rotatedrtk;
-                auto rtksubtracted = rotatedrtk - rotatedrtk;
-                auto rtksubtractedfrontPoint = rotatedfrontPoint - rotatedrtk; //change here karthik
-                auto rtksubtractedrearPoint = rotatedrearPoint - rotatedrtk;
+                auto rtkSubtractedCenteroid = rotatedCenteroid - rotatedRtk;
+                auto rtkSubtracted = rotatedrtk - rotatedRtk;
+                auto rtkSubtractedFrontPoint = rotatedFrontPoint - rotatedRtk; //change here karthik
+                auto rtkSubtractedRearPoint = rotatedRearPoint - rotatedRtk;
 
 
-                ego.push_back({rtksubtractedcenteroid(0) + rtkPoints->pos()->x(),
-                               rtkPoints->pos()->y() + rtksubtractedcenteroid(1),
-                               rtkPoints->pos()->z() + rtksubtractedcenteroid(2), rtkPoints->timestamp()});
-                ego.push_back({rtksubtractedfrontPoint(0) + rtkPoints->pos()->x(),
-                               rtkPoints->pos()->y() + rtksubtractedfrontPoint(1),
-                               rtkPoints->pos()->z() + rtksubtractedfrontPoint(2), rtkPoints->timestamp()});
-                ego.push_back({rtksubtractedrearPoint(0) + rtkPoints->pos()->x(),
-                               rtkPoints->pos()->y() + rtksubtractedrearPoint(1),
-                               rtkPoints->pos()->z() + rtksubtractedrearPoint(2), rtkPoints->timestamp()});
+                ego.push_back({rtkSubtractedCenteroid(0) + rtkPoints->pos()->x(),
+                               rtkPoints->pos()->y() + rtkSubtractedCenteroid(1),
+                               rtkPoints->pos()->z() + rtkSubtractedCenteroid(2), rtkPoints->timestamp()});
+                ego.push_back({rtkSubtractedFrontPoint(0) + rtkPoints->pos()->x(),
+                               rtkPoints->pos()->y() + rtkSubtractedFrontPoint(1),
+                               rtkPoints->pos()->z() + rtkSubtractedFrontPoint(2), rtkPoints->timestamp()});
+                ego.push_back({rtkSubtractedRearPoint(0) + rtkPoints->pos()->x(),
+                               rtkPoints->pos()->y() + rtkSubtractedRearPoint(1),
+                               rtkPoints->pos()->z() + rtkSubtractedRearPoint(2), rtkPoints->timestamp()});
                 ego.push_back(
-                        {rtksubtracted(0) + rtkPoints->pos()->x(), rtkPoints->pos()->y() + rtksubtracted(1),
-                         rtkPoints->pos()->z() + rtksubtracted(2),
+                        {rtkSubtracted(0) + rtkPoints->pos()->x(), rtkPoints->pos()->y() + rtkSubtracted(1),
+                         rtkPoints->pos()->z() + rtkSubtracted(2),
                          rtkPoints->timestamp()});
             }
         }
