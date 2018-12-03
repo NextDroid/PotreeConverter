@@ -259,7 +259,7 @@ namespace Potree{
             point.position.x = Points[counter].bbox_x;
             point.position.y = Points[counter].bbox_y;
             point.position.z = Points[counter].bbox_z;
-            point.gpsTime    = timeStamps - 1495189467.6400001;  //Hardcoded values should be fixed in the Potree Visualizer
+            point.gpsTime    = timeStamps - 1495189467.6400001;  //TODO Hardcoded values should be fixed in the Potree Visualizer
             counter++;
             return true;
 
@@ -269,7 +269,7 @@ namespace Potree{
                 point.position.x = Points[counter].bbox_x;
                 point.position.y = Points[counter].bbox_y;
                 point.position.z = Points[counter].bbox_z;
-                point.gpsTime    = timeStamps - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                point.gpsTime    = timeStamps - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
                 counter++;
                 return true;
 
@@ -487,7 +487,7 @@ namespace Potree{
                     point.position.x = detectionPoints->centroid()->x();
                     point.position.y = detectionPoints->centroid()->y();
                     point.position.z = detectionPoints->centroid()->z();
-                    point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                    point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; // TODO Hardcoded values should be fixed in the Potree Visualizer
                     detectionCounter++;
                     return true;
                 }
@@ -501,7 +501,7 @@ namespace Potree{
                         point.position.x = detectionPoints->centroid()->x();
                         point.position.y = detectionPoints->centroid()->y();
                         point.position.z = detectionPoints->centroid()->z();
-                        point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                        point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
                         detectionCounter++;
                         return true;
                     }
@@ -511,11 +511,11 @@ namespace Potree{
 
                 // check if the end of 4 bytes segment reached
                 if (rtkCounter < rtkLength && rtkCounter==0) {
-                    //egoDimensions();                             Should be Edited when we have the dimensions of the vehicle provided by the LG.
+                    //egoDimensions();                             TODO Should be Edited when we have the dimensions of the vehicle provided by the LG.
                     point.position.x = ego[rtkCounter].ego_x;
                     point.position.y = ego[rtkCounter].ego_y;
                     point.position.z = ego[rtkCounter].ego_z;
-                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
                     rtkCounter++;
                     return true;
                 }
@@ -524,7 +524,7 @@ namespace Potree{
                     point.position.x = ego[rtkCounter].ego_x;
                     point.position.y = ego[rtkCounter].ego_y;
                     point.position.z = ego[rtkCounter].ego_z;
-                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
                     rtkCounter++;
                     return true;
                 }
@@ -535,7 +535,7 @@ namespace Potree{
                         point.position.x = ego[rtkCounter].ego_x;
                         point.position.y = ego[rtkCounter].ego_y;
                         point.position.z = ego[rtkCounter].ego_z;
-                        point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
+                        point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
                         return true;
                     }
                     else {
