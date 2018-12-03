@@ -39,7 +39,7 @@ namespace Potree{
 
     FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0), counter(0), laneCounter(0), detectionCounter(0), rtkCounter(0) {
 
-        this->path               = path;
+        path                     = path;
         this->aabb               = aabb;
         this->flatBufferFileType = flatBufferType;
 
@@ -61,7 +61,7 @@ namespace Potree{
         }
 
         currentFile = files.begin();
-        reader      = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+        fileReader  = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
 
         //     Check if there are any points.
 
@@ -84,10 +84,9 @@ namespace Potree{
             }
             pointCount++;
         }
-        reader->clear();
-        reader->seekg(0, reader->beg);
+
         currentFile = files.begin();
-        reader      = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+        fileReader  = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
     }
 
     FlatBufferReader::~FlatBufferReader(){
@@ -114,8 +113,8 @@ namespace Potree{
             uint8_t buffer[4];
 
             std::cout.precision(std::numeric_limits<double>::max_digits10);
-            reader->read(reinterpret_cast<char *>(buffer), 4);
-            if (reader->eof()) {
+            fileReader->read(reinterpret_cast<char *>(buffer), 4);
+            if (fileReader->eof()) {
                 std::cerr << "Reader is at end of file" << std::endl;
 
                 return false;
@@ -127,16 +126,16 @@ namespace Potree{
                                            buffer[1] << 8 |
                                            buffer[0];
 
-            buf2.clear();
-            buf2.reserve(numberOfBytes);
+            readerBuffer.clear();
+            readerBuffer.reserve(numberOfBytes);
 
-            reader->read(&buf2[0], numberOfBytes);
+            fileReader->read(&readerBuffer[0], numberOfBytes);
 
             //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
 
             if (flatBufferFileType == "point")
             {
-                auto pointcloud = LIDARWORLD::GetPointCloud(&buf2[0]);
+                auto pointcloud = LIDARWORLD::GetPointCloud(&readerBuffer[0]);
                 pos             = pointcloud->points();
                 pointsLength    = pos->Length();
                 if (pointsLength != 0)
@@ -147,7 +146,7 @@ namespace Potree{
 
             else if (flatBufferFileType == "bbox")
             {
-                auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&buf2[0]);
+                auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&readerBuffer[0]);
                 statesFb       = track->states();
                 statesLength   = statesFb->Length();
                 return  true;
@@ -157,7 +156,7 @@ namespace Potree{
 
             else if (flatBufferFileType == "lanes")
             {
-                auto Lane       = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&buf2[0]);
+                Lane            = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Lane>(&readerBuffer[0]);
                 rightLane       = Lane->right();
                 leftLane        = Lane->left();
                 spine           = Lane ->spine();
@@ -171,9 +170,9 @@ namespace Potree{
 
             else if (flatBufferFileType == "detections")
             {
-                auto Detection   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&buf2[0]);
-                center           = Detection->detections();
-                detectionLength  = center->Length();
+                auto Detection   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&readerBuffer[0]);
+                detectionCenter  = Detection->detections();
+                detectionLength  = detectionCenter->Length();
                 return true;
             }
 
@@ -181,9 +180,9 @@ namespace Potree{
 
             else if (flatBufferFileType == "rtk")
             {
-                auto  rtk   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&buf2[0]);
-                rtkPose     = rtk->poses();
-                rtkLength   = rtkPose->Length();
+                auto  rtk     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&readerBuffer[0]);
+                auto rtkPose  = rtk->poses();
+                rtkLength     = rtkPose->Length();
 
                 return  true;
             }
@@ -207,15 +206,15 @@ namespace Potree{
         // Assign all the lane points into a vetor for every segment.
 
         for (int leftLaneidx = 0; leftLaneidx < leftLaneLength; leftLaneidx++) {
-            LanePoints.push_back({leftLane->Get(leftLaneidx)->x(), leftLane->Get(leftLaneidx)->y(), leftLane->Get(leftLaneidx)->z()});
+            LanePoints.push_back({leftLane->Get(leftLaneidx)->x(), leftLane->Get(leftLaneidx)->y(), leftLane->Get(leftLaneidx)->z(),Lane->timestamp()->Get(leftLaneidx)});
         }
 
         for (int rightLaneidx = 0; rightLaneidx < rightLaneLength; rightLaneidx++) {
-            LanePoints.push_back({rightLane->Get(rightLaneidx)->x(), rightLane->Get(rightLaneidx)->y(), rightLane->Get(rightLaneidx)->z()});
+            LanePoints.push_back({rightLane->Get(rightLaneidx)->x(), rightLane->Get(rightLaneidx)->y(), rightLane->Get(rightLaneidx)->z(),Lane->timestamp()->Get(rightLaneidx)});
         }
 
         for (int spineidx = 0; spineidx < spineLength; spineidx++) {
-            LanePoints.push_back({spine->Get(spineidx)->x(), spine->Get(spineidx)->y(), spine->Get(spineidx)->z()});
+            LanePoints.push_back({spine->Get(spineidx)->x(), spine->Get(spineidx)->y(), spine->Get(spineidx)->z(),Lane->timestamp()->Get(spineidx)});
         }
     }
 
@@ -233,7 +232,7 @@ namespace Potree{
 
             for (int stateIdx = 0;stateIdx < statesLength;stateIdx++) {
 
-                bbox          = state[stateIdx]->bbox();
+                auto bbox     = state[stateIdx]->bbox();
                 auto bbox_len = bbox->Length();
                 timeStamps    = state[stateIdx]->timestamps();
 
@@ -286,8 +285,11 @@ namespace Potree{
 
     }
 
-
-
+/*    Should be Edited when we know the exact dimensions of the vehicle.
+ *    This Function calculates the front and rear bumper dimensions and works on applying rotations to help be in the same plane.
+ *
+ *
+// Performing Quaternion Rotation of the RTK points along the centroid of the ego vehicle.
     Eigen::Quaterniond
     euler2Quaternion( const double roll,
                       const double pitch,
@@ -312,44 +314,88 @@ namespace Potree{
     }
 
     bool FlatBufferReader::egoDimensions() {
-        /*    WORK IN PROGRESS
-         *
-         */
-        Eigen::Vector4d New, New2,RotatedPoint,Rotated;
+
+        Eigen::Vector4d  rtk,RotatedPoint,Rotated,centeroid, rearPoint, frontPoint;
         Eigen::Vector3d Yaw;
 
-        for(int rtkcounter = 0; rtkcounter < rtkLength; rtkcounter++)
-        { auto rtkPoints = rtkPose->Get(rtkcounter);
-            ego.push_back({rtkPoints->pos()->x(),  rtkPoints->pos()->y(),  rtkPoints->pos()->z(), rtkPoints->timestamp()});
-//            ego.push_back({-rtkPoints->pos()->y(), rtkPoints->pos()->x()-1.165, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
-//            ego.push_back({rtkPoints->pos()->y(), -rtkPoints->pos()->x()+2.435, rtkPoints->pos()->z()-10.553, rtkPoints->timestamp()});
+        for(int rtkcounter = 0; rtkcounter < rtkLength; rtkcounter++) {
+            auto rtkPoints = rtkPose->Get(rtkcounter);
 
-            New(0) = (rtkPoints->pos()->x()+2.435)-0.457;
-            New(1) = rtkPoints->pos()->y()-0.740;
-            New(2) = rtkPoints->pos()->z();
-            New(3) = 1;
+            //Defining the rotations around the yaw axis.
             Yaw(0) = 0;
             Yaw(1) = 0;
-            Yaw(2) = rtkPose->Get(rtkcounter)->orientation()->z();
+            Yaw(2) = rtkPoints->orientation()->z();
 
-            auto RotationMatrix=  getTxMat(New,Yaw);
-            RotatedPoint= (RotationMatrix * New);
-            ego.push_back({RotatedPoint(0)+0.457,RotatedPoint(1)+0.740,RotatedPoint(2),rtkPoints->timestamp()});
-//            New2(0) = rtkPoints->pos()->x()+2.435;
-//            New2(1) = rtkPoints->pos()->y();
-//            New2(2) = rtkPoints->pos()->z();
-//            auto Rotation=  getTxMat(New2,Yaw);
-//            Rotated= (Rotation * New2);
-//            ego.push_back({Rotated(0),Rotated(1),Rotated(2),rtkPoints->timestamp()});
+            //considering the rtk point in the world frame 0,0,0
+            rtk(0) = rtk(1) = rtk(2) = 0;
+            rtk(3) = 1;
 
+            // Defining The centroid, front bumper (2.435,0,0) and the rear bumper points (-1.165,0,0)
+            centeroid(0) = centeroid(1) = centeroid(2) = 0;
+
+            centeroid(3) = 1;
+            rearPoint(0) = -1.165;
+//            frontPoint(0) = 2.435;
+
+
+            rearPoint(1) = rearPoint(2) = frontPoint(2) = 0;
+            rearPoint(3) = frontPoint(3) = 1;
+
+            for (frontPoint(1) = 0; frontPoint(1) > -1; frontPoint(1) -= 0.2) {
+                for (frontPoint(0)= 2.2;frontPoint(0)<3;frontPoint(0)+=0.2){
+//                    std::cout<<frontPoint(0);
+                centeroid = (rearPoint + frontPoint) / 2;
+
+                //Subtracting the centroid
+                auto centroidrearPoint = rearPoint - centeroid;
+                auto centroidfrontPoint = frontPoint - centeroid;
+
+                rtk = rtk - centeroid;
+
+                //applying rotations
+                auto rearRotationMatrix = getTxMat(centroidrearPoint, Yaw);
+                auto rotatedfrontPoint = (rearRotationMatrix * centeroid);
+                auto frontRotationMatrix = getTxMat(centroidfrontPoint, Yaw);
+                auto rotatedrearPoint = (frontRotationMatrix * centeroid);
+//                std::cout<<"rear rotations"<<rearPoint<<std::endl;
+
+                auto rtkRotationMatrix = getTxMat(rtk, Yaw);
+                auto rotatedrtk = (rtkRotationMatrix * centeroid);
+                auto centroidRotationMatrix = getTxMat(centeroid, Yaw);
+                auto rotatedcenteroid = (centroidRotationMatrix * centeroid);
+
+                //subtract rtk
+
+                auto rtksubtractedcenteroid = rotatedcenteroid - rotatedrtk;
+                auto rtksubtracted = rotatedrtk - rotatedrtk;
+                auto rtksubtractedfrontPoint = rotatedfrontPoint - rotatedrtk; //change here karthik
+                auto rtksubtractedrearPoint = rotatedrearPoint - rotatedrtk;
+
+
+                ego.push_back({rtksubtractedcenteroid(0) + rtkPoints->pos()->x(),
+                               rtkPoints->pos()->y() + rtksubtractedcenteroid(1),
+                               rtkPoints->pos()->z() + rtksubtractedcenteroid(2), rtkPoints->timestamp()});
+                ego.push_back({rtksubtractedfrontPoint(0) + rtkPoints->pos()->x(),
+                               rtkPoints->pos()->y() + rtksubtractedfrontPoint(1),
+                               rtkPoints->pos()->z() + rtksubtractedfrontPoint(2), rtkPoints->timestamp()});
+                ego.push_back({rtksubtractedrearPoint(0) + rtkPoints->pos()->x(),
+                               rtkPoints->pos()->y() + rtksubtractedrearPoint(1),
+                               rtkPoints->pos()->z() + rtksubtractedrearPoint(2), rtkPoints->timestamp()});
+                ego.push_back(
+                        {rtksubtracted(0) + rtkPoints->pos()->x(), rtkPoints->pos()->y() + rtksubtracted(1),
+                         rtkPoints->pos()->z() + rtksubtracted(2),
+                         rtkPoints->timestamp()});
+            }
         }
+        }
+
 
     }
 
 
 
 
-
+*/
     bool FlatBufferReader::readNextPoint() {
         /** @brief This is the main driver function which checks for the points in the file and populate the points to the AABB function.
          *  @param[in] reader with 4 bytes of data
@@ -357,7 +403,7 @@ namespace Potree{
          */
 
 
-        bool hasPoints = reader->good();
+        bool hasPoints = fileReader->good();
         if(hasPoints ) {
             if (flatBufferFileType == "point" ) {
                 // check if the end of 4 bytes segment reached
@@ -410,7 +456,7 @@ namespace Potree{
                     point.position.x = LanePoints[laneCounter].lane_x;
                     point.position.y = LanePoints[laneCounter].lane_y;
                     point.position.z = LanePoints[laneCounter].lane_z;
-//                    point.gpsTime = Lane->timestamp()->Get(laneCounter);
+                    point.gpsTime    = LanePoints[laneCounter].lane_gps;
                     laneCounter++;
                     return true;
                 }
@@ -423,7 +469,7 @@ namespace Potree{
                         point.position.x = LanePoints[laneCounter].lane_x;
                         point.position.y = LanePoints[laneCounter].lane_y;
                         point.position.z = LanePoints[laneCounter].lane_z;
-//                        point.gpsTime = Lane->timestamp()->Get(laneCounter);
+                        point.gpsTime    = LanePoints[laneCounter].lane_gps;
                         laneCounter++;
                         return true;
                     }
@@ -436,13 +482,12 @@ namespace Potree{
             else if (flatBufferFileType == "detections" ) {
 
                 if (detectionCounter < detectionLength) {
-                    auto detectionPoints = center->Get(detectionCounter);
+                    auto detectionPoints = detectionCenter->Get(detectionCounter);
 
                     point.position.x = detectionPoints->centroid()->x();
                     point.position.y = detectionPoints->centroid()->y();
                     point.position.z = detectionPoints->centroid()->z();
                     point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
-                    std::cout<<point.gpsTime<<std::endl;
                     detectionCounter++;
                     return true;
                 }
@@ -451,13 +496,12 @@ namespace Potree{
                 else if (detectionCounter == detectionLength) {
                     detectionCounter = 0;
                     if (populatePointCloud()) {
-                        auto detectionPoints = center->Get(detectionCounter);
+                        auto detectionPoints = detectionCenter->Get(detectionCounter);
 
                         point.position.x = detectionPoints->centroid()->x();
                         point.position.y = detectionPoints->centroid()->y();
                         point.position.z = detectionPoints->centroid()->z();
                         point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //Hardcoded values should be fixed in the Potree Visualizer
-//                        std::cout<<point.gpsTime<<std::endl;
                         detectionCounter++;
                         return true;
                     }
@@ -467,7 +511,7 @@ namespace Potree{
 
                 // check if the end of 4 bytes segment reached
                 if (rtkCounter < rtkLength && rtkCounter==0) {
-                    egoDimensions();
+                    //egoDimensions();                             Should be Edited when we have the dimensions of the vehicle provided by the LG.
                     point.position.x = ego[rtkCounter].ego_x;
                     point.position.y = ego[rtkCounter].ego_y;
                     point.position.z = ego[rtkCounter].ego_z;
@@ -487,7 +531,7 @@ namespace Potree{
                 else if (rtkCounter == ego.size()) {
                     rtkCounter = 0;
                     if (populatePointCloud()) {
-                        egoDimensions();
+//                        egoDimensions();
                         point.position.x = ego[rtkCounter].ego_x;
                         point.position.y = ego[rtkCounter].ego_y;
                         point.position.z = ego[rtkCounter].ego_z;
@@ -506,9 +550,8 @@ namespace Potree{
             currentFile++;
 
             if (currentFile != files.end()) {
-                reader->close();
-                reader = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
-                hasPoints = reader->good();
+                fileReader    = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+                hasPoints     = fileReader->good();
             }
         }
         return hasPoints;
