@@ -16,6 +16,7 @@
 #include <experimental/filesystem>
 #include <DataSchemas/LidarWorld_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
+#include <DataSchemas/VisualizationPrimitives_generated.h>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
 
@@ -37,9 +38,9 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  count(1), pointsLength(0), counter(0), laneCounter(0), detectionCounter(0), rtkCounter(0) {
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(1), pointsLength(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
 
-        path                     = path;
+
         this->aabb               = aabb;
         this->flatBufferFileType = flatBufferType;
 
@@ -136,8 +137,8 @@ namespace Potree{
             if (flatBufferFileType == "point")
             {
                 auto pointcloud = LIDARWORLD::GetPointCloud(&readerBuffer[0]);
-                pos             = pointcloud->points();
-                pointsLength    = pos->Length();
+                points          = pointcloud->points();
+                pointsLength    = points->Length();
                 if (pointsLength != 0)
                     return true;
             }
@@ -146,6 +147,7 @@ namespace Potree{
 
             else if (flatBufferFileType == "bbox")
             {
+//
                 auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&readerBuffer[0]);
                 statesFb       = track->states();
                 statesLength   = statesFb->Length();
@@ -227,7 +229,7 @@ namespace Potree{
 
 
         double timeStamps;
-        if (counter == 0) {
+        if (bboxPointsIdx == 0) {
             auto &state = *statesFb;
 
             for (int stateIdx = 0;stateIdx < statesLength;stateIdx++) {
@@ -256,27 +258,27 @@ namespace Potree{
                                   ((bbox->Get(3)->y()) + (bbox->Get(4)->y())) / 2,
                                   ((bbox->Get(3)->z()) + (bbox->Get(4)->z())) / 2});
             }
-            point.position.x = Points[counter].bbox_x;
-            point.position.y = Points[counter].bbox_y;
-            point.position.z = Points[counter].bbox_z;
-            point.gpsTime    = timeStamps - 1495189467.6400001;  //TODO Hardcoded values should be fixed in the Potree Visualizer
-            counter++;
+            point.position.x = Points[bboxPointsIdx].bbox_x;
+            point.position.y = Points[bboxPointsIdx].bbox_y;
+            point.position.z = Points[bboxPointsIdx].bbox_z;
+            point.gpsTime    = timeStamps ;
+            bboxPointsIdx++;
             return true;
 
         }
-        else{ if (counter < Points.size()) {
+        else{ if (bboxPointsIdx < Points.size()) {
 
-                point.position.x = Points[counter].bbox_x;
-                point.position.y = Points[counter].bbox_y;
-                point.position.z = Points[counter].bbox_z;
-                point.gpsTime    = timeStamps - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
-                counter++;
+                point.position.x = Points[bboxPointsIdx].bbox_x;
+                point.position.y = Points[bboxPointsIdx].bbox_y;
+                point.position.z = Points[bboxPointsIdx].bbox_z;
+                point.gpsTime    = timeStamps;
+                bboxPointsIdx++;
                 return true;
 
             }
             else {
                 Points.clear();
-                counter = 0;
+                bboxPointsIdx = 0;
                 populatePointCloud();
                 centroid();
             }
@@ -408,9 +410,9 @@ namespace Potree{
             if (flatBufferFileType == "point" ) {
                 // check if the end of 4 bytes segment reached
 
-                if (count < pointsLength) {
-                    auto fbPoints    = pos->Get(count);
-                    count++;
+                if (pointsIdx < pointsLength) {
+                    auto fbPoints    = points->Get(pointsIdx);
+                    pointsIdx++;
                     point.position.x = fbPoints->x();
                     point.position.y = fbPoints->y();
                     point.position.z = fbPoints->z();
@@ -420,11 +422,11 @@ namespace Potree{
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
 
-                else if (count == pointsLength) {
-                    count = 0;
+                else if (pointsIdx == pointsLength) {
+                    pointsIdx = 0;
                     if (populatePointCloud()) {
-                        auto fbPoints    = pos->Get(count);
-                        count++;
+                        auto fbPoints    = points->Get(pointsIdx);
+                        pointsIdx++;
                         point.position.x = fbPoints->x();
                         point.position.y = fbPoints->y();
                         point.position.z = fbPoints->z();
@@ -446,31 +448,31 @@ namespace Potree{
             }
             else if (flatBufferFileType == "lanes") {
 
-                if (laneCounter == 0) {
+                if (laneIdx == 0) {
                     lanePoints();
 
                 }
 
-                if (laneCounter < LanePoints.size()) {
+                if (laneIdx < LanePoints.size()) {
 
-                    point.position.x = LanePoints[laneCounter].lane_x;
-                    point.position.y = LanePoints[laneCounter].lane_y;
-                    point.position.z = LanePoints[laneCounter].lane_z;
-                    point.gpsTime    = LanePoints[laneCounter].lane_gps;
-                    laneCounter++;
+                    point.position.x = LanePoints[laneIdx].lane_x;
+                    point.position.y = LanePoints[laneIdx].lane_y;
+                    point.position.z = LanePoints[laneIdx].lane_z;
+                    point.gpsTime    = LanePoints[laneIdx].lane_gps;
+                    laneIdx++;
                     return true;
                 }
-                else if (laneCounter == LanePoints.size()) {
-                    laneCounter = 0;
+                else if (laneIdx == LanePoints.size()) {
+                    laneIdx = 0;
                     LanePoints.clear();
                     if (populatePointCloud()) {
                         lanePoints();
 
-                        point.position.x = LanePoints[laneCounter].lane_x;
-                        point.position.y = LanePoints[laneCounter].lane_y;
-                        point.position.z = LanePoints[laneCounter].lane_z;
-                        point.gpsTime    = LanePoints[laneCounter].lane_gps;
-                        laneCounter++;
+                        point.position.x = LanePoints[laneIdx].lane_x;
+                        point.position.y = LanePoints[laneIdx].lane_y;
+                        point.position.z = LanePoints[laneIdx].lane_z;
+                        point.gpsTime    = LanePoints[laneIdx].lane_gps;
+                        laneIdx++;
                         return true;
                     }
                     else {
@@ -481,28 +483,28 @@ namespace Potree{
             }
             else if (flatBufferFileType == "detections" ) {
 
-                if (detectionCounter < detectionLength) {
-                    auto detectionPoints = detectionCenter->Get(detectionCounter);
+                if (detectionIdx < detectionLength) {
+                    auto detectionPoints = detectionCenter->Get(detectionIdx);
 
                     point.position.x = detectionPoints->centroid()->x();
                     point.position.y = detectionPoints->centroid()->y();
                     point.position.z = detectionPoints->centroid()->z();
-                    point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; // TODO Hardcoded values should be fixed in the Potree Visualizer
-                    detectionCounter++;
+                    point.gpsTime    = detectionPoints->timestamp();
+                    detectionIdx++;
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
 
-                else if (detectionCounter == detectionLength) {
-                    detectionCounter = 0;
+                else if (detectionIdx == detectionLength) {
+                    detectionIdx = 0;
                     if (populatePointCloud()) {
-                        auto detectionPoints = detectionCenter->Get(detectionCounter);
+                        auto detectionPoints = detectionCenter->Get(detectionIdx);
 
                         point.position.x = detectionPoints->centroid()->x();
                         point.position.y = detectionPoints->centroid()->y();
                         point.position.z = detectionPoints->centroid()->z();
-                        point.gpsTime    = detectionPoints->timestamp() - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
-                        detectionCounter++;
+                        point.gpsTime    = detectionPoints->timestamp();
+                        detectionIdx++;
                         return true;
                     }
                 }
@@ -510,32 +512,32 @@ namespace Potree{
             else if (flatBufferFileType == "rtk" ) {
 
                 // check if the end of 4 bytes segment reached
-                if (rtkCounter < rtkLength && rtkCounter==0) {
+                if (rtkIdx < rtkLength && rtkIdx==0) {
                     //egoDimensions();                             TODO Should be Edited when we have the dimensions of the vehicle provided by the LG.
-                    point.position.x = ego[rtkCounter].ego_x;
-                    point.position.y = ego[rtkCounter].ego_y;
-                    point.position.z = ego[rtkCounter].ego_z;
-                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
-                    rtkCounter++;
+                    point.position.x = ego[rtkIdx].ego_x;
+                    point.position.y = ego[rtkIdx].ego_y;
+                    point.position.z = ego[rtkIdx].ego_z;
+                    point.gpsTime    = ego[rtkIdx].ego_time;
+                    rtkIdx++;
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
-                else if (rtkCounter < ego.size()) {
-                    point.position.x = ego[rtkCounter].ego_x;
-                    point.position.y = ego[rtkCounter].ego_y;
-                    point.position.z = ego[rtkCounter].ego_z;
-                    point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
-                    rtkCounter++;
+                else if (rtkIdx < ego.size()) {
+                    point.position.x = ego[rtkIdx].ego_x;
+                    point.position.y = ego[rtkIdx].ego_y;
+                    point.position.z = ego[rtkIdx].ego_z;
+                    point.gpsTime    = ego[rtkIdx].ego_time;
+                    rtkIdx++;
                     return true;
                 }
-                else if (rtkCounter == ego.size()) {
-                    rtkCounter = 0;
+                else if (rtkIdx == ego.size()) {
+                    rtkIdx = 0;
                     if (populatePointCloud()) {
 //                        egoDimensions();
-                        point.position.x = ego[rtkCounter].ego_x;
-                        point.position.y = ego[rtkCounter].ego_y;
-                        point.position.z = ego[rtkCounter].ego_z;
-                        point.gpsTime    = ego[rtkCounter].ego_time - 1495189467.6400001; //TODO Hardcoded values should be fixed in the Potree Visualizer
+                        point.position.x = ego[rtkIdx].ego_x;
+                        point.position.y = ego[rtkIdx].ego_y;
+                        point.position.z = ego[rtkIdx].ego_z;
+                        point.gpsTime    = ego[rtkIdx].ego_time; 
                         return true;
                     }
                     else {
@@ -562,5 +564,3 @@ namespace Potree{
         return aabb;
     }
 }
-
-

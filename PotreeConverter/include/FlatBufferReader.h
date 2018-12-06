@@ -53,7 +53,7 @@ namespace Potree{
 
         Point point;
         uint64_t pointCount;
-        const flatbuffers::Vector<const LIDARWORLD::Point *> *pos;
+        const flatbuffers::Vector<const LIDARWORLD::Point *> *points;
         const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *>  *rightLane,*leftLane,*spine;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Detection>> *detectionCenter;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
@@ -94,7 +94,7 @@ namespace Potree{
 
 
         string flatBufferFileType;
-        int count,counter,laneCounter,detectionCounter,rtkCounter;
+        int pointsIdx,bboxPointsIdx,laneIdx,detectionIdx,rtkIdx;
         int pointsLength,statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength,rtkLength;
 
     };
