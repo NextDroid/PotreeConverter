@@ -86,7 +86,7 @@ namespace Potree{
 
 
 
-        bool populatePointCloud();
+        bool prepareNextSegment();
 
         bool centroid();
         bool lanePoints();

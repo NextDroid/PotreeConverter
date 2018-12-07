@@ -66,7 +66,7 @@ namespace Potree{
 
         //     Check if there are any points.
 
-        bool firstCloudPopulated = populatePointCloud();
+        bool firstCloudPopulated = prepareNextSegment();
         if (!firstCloudPopulated) {
             std::cerr << "Could not populate first cloud" << std::endl;
         }
@@ -104,7 +104,7 @@ namespace Potree{
         return pointCount;
     }
 
-    bool FlatBufferReader::populatePointCloud()  {
+    bool FlatBufferReader::prepareNextSegment()  {
         /** @brief This function is called every time to read 4 bytes of data from flatbuffer file, when the code reaches the end of segment
          *  @param[in] reader to read the 4 bytes
          *  @return bool
@@ -279,7 +279,7 @@ namespace Potree{
             else {
                 Points.clear();
                 bboxPointsIdx = 0;
-                populatePointCloud();
+                prepareNextSegment();
                 centroid();
             }
         }
@@ -424,7 +424,7 @@ namespace Potree{
 
                 else if (pointsIdx == pointsLength) {
                     pointsIdx = 0;
-                    if (populatePointCloud()) {
+                    if (prepareNextSegment()) {
                         auto fbPoints    = points->Get(pointsIdx);
                         pointsIdx++;
                         point.position.x = fbPoints->x();
@@ -465,7 +465,7 @@ namespace Potree{
                 else if (laneIdx == LanePoints.size()) {
                     laneIdx = 0;
                     LanePoints.clear();
-                    if (populatePointCloud()) {
+                    if (prepareNextSegment()) {
                         lanePoints();
 
                         point.position.x = LanePoints[laneIdx].lane_x;
@@ -497,7 +497,7 @@ namespace Potree{
 
                 else if (detectionIdx == detectionLength) {
                     detectionIdx = 0;
-                    if (populatePointCloud()) {
+                    if (prepareNextSegment()) {
                         auto detectionPoints = detectionCenter->Get(detectionIdx);
 
                         point.position.x = detectionPoints->centroid()->x();
@@ -532,12 +532,12 @@ namespace Potree{
                 }
                 else if (rtkIdx == ego.size()) {
                     rtkIdx = 0;
-                    if (populatePointCloud()) {
+                    if (prepareNextSegment()) {
 //                        egoDimensions();
                         point.position.x = ego[rtkIdx].ego_x;
                         point.position.y = ego[rtkIdx].ego_y;
                         point.position.z = ego[rtkIdx].ego_z;
-                        point.gpsTime    = ego[rtkIdx].ego_time; 
+                        point.gpsTime    = ego[rtkIdx].ego_time;
                         return true;
                     }
                     else {
