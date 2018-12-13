@@ -14,7 +14,7 @@
 #include <vector>
 
 #include <experimental/filesystem>
-#include <DataSchemas/LidarWorld_generated.h>
+#include <DataSchemas/Lidar_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
 #include <DataSchemas/VisualizationPrimitives_generated.h>
 #include <eigen3/Eigen/Core>
@@ -77,6 +77,7 @@ namespace Potree{
         while(readNextPoint()) {
 
             const Point p = getPoint();
+
             if (pointCount == 0) {
                 this->aabb = AABB(p.position);
             }
@@ -136,7 +137,7 @@ namespace Potree{
 
             if (flatBufferFileType == "point")
             {
-                auto pointcloud = LIDARWORLD::GetPointCloud(&readerBuffer[0]);
+                auto pointcloud = Flatbuffer::LIDAR::GetPointCloud(&readerBuffer[0]);
                 points          = pointcloud->points();
                 pointsLength    = points->Length();
                 if (pointsLength != 0)

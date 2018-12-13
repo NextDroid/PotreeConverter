@@ -15,7 +15,7 @@
 #include "PointReader.h"
 #include <memory>
 #include <fstream>
-#include <DataSchemas/LidarWorld_generated.h>
+#include <DataSchemas/Lidar_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
 
 
@@ -53,7 +53,7 @@ namespace Potree{
 
         Point point;
         uint64_t pointCount;
-        const flatbuffers::Vector<const LIDARWORLD::Point *> *points;
+        const flatbuffers::Vector<const Flatbuffer::LIDAR::Point *> *points;
         const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *>  *rightLane,*leftLane,*spine;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Detection>> *detectionCenter;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;
