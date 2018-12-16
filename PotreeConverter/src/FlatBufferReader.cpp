@@ -16,7 +16,7 @@
 #include <experimental/filesystem>
 #include <DataSchemas/Lidar_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
-#include <DataSchemas/VisualizationPrimitives_generated.h>
+//#include <DataSchemas/VisualizationPrimitives_generated.h>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
 
@@ -43,7 +43,7 @@ namespace Potree{
 
         this->aabb               = aabb;
         this->flatBufferFileType = flatBufferType;
-
+        buffer = new unsigned char[4];
         std::cout<<" The FlatBuffer file type is  = " << flatBufferFileType << std::endl;
         std::cout << "Filepath = " << path << std::endl;
 
@@ -62,7 +62,7 @@ namespace Potree{
         }
 
         currentFile = files.begin();
-        fileReader  = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+        reader = new ifstream(*currentFile, ios::in | ios::binary);
 
         //     Check if there are any points.
 
@@ -85,21 +85,27 @@ namespace Potree{
                 this->aabb.update(p.position);
             }
             pointCount++;
+            if(pointCount > 671585823){std::cout<<"Over -  "<<pointCount << "  "<< p<<std::endl;}
         }
 
         currentFile = files.begin();
-        fileReader  = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
+        reader = new ifstream(*currentFile, ios::in | ios::binary);
     }
-
     FlatBufferReader::~FlatBufferReader(){
-        close() ;
 
-    }
+          close();
 
-    void FlatBufferReader::close(){
+      }
 
-        // Stub Function. close() function is declared as virtual in the abstract class "PointReader"
-    }
+      void FlatBufferReader::close(){
+          if(reader != NULL){
+              reader->close();
+
+              delete reader;
+              reader = NULL;
+
+          }
+      }
 
     int64_t FlatBufferReader::numPoints(){
         return pointCount;
@@ -112,27 +118,37 @@ namespace Potree{
          */
 
         try{
-            uint8_t buffer[4];
+
 
             std::cout.precision(std::numeric_limits<double>::max_digits10);
-            fileReader->read(reinterpret_cast<char *>(buffer), 4);
-            if (fileReader->eof()) {
+
+            reader->read(reinterpret_cast<char *>(buffer), 4);
+            if ((reader->eof())||(reader->bad())||(reader->peek() == 0)) {
                 std::cerr << "Reader is at end of file" << std::endl;
 
                 return false;
             }
 
+            auto numberOfBytes = (uint32_t) buffer[3] << 24 |
+                            (uint32_t) buffer[2] << 16 |
+                            (uint32_t) buffer[1] << 8 |
+                            (uint32_t) buffer[0];
 
-            const uint64_t numberOfBytes = buffer[3] << 24 |
-                                           buffer[2] << 16 |
-                                           buffer[1] << 8 |
-                                           buffer[0];
 
+            if (numberOfBytes==0) {
+                std::cerr << "Reader is at end of file" << std::endl;
+
+                return false;
+            }
             readerBuffer.clear();
             readerBuffer.reserve(numberOfBytes);
 
-            fileReader->read(&readerBuffer[0], numberOfBytes);
+            if ((reader->eof())||(reader->bad())||(reader->peek() == 0)) {
+                std::cerr << "Reader is at end of file" << std::endl;
 
+                return false;
+            }
+            reader->read(&readerBuffer[0], numberOfBytes);
             //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
 
             if (flatBufferFileType == "point")
@@ -406,7 +422,7 @@ namespace Potree{
          */
 
 
-        bool hasPoints = fileReader->good();
+        bool hasPoints = reader->good();
         if(hasPoints ) {
             if (flatBufferFileType == "point" ) {
                 // check if the end of 4 bytes segment reached
@@ -435,11 +451,13 @@ namespace Potree{
                         point.intensity  = fbPoints->intensity();
                         return true;
                     }
-                    else {
+                    else if (!prepareNextSegment()) {
+
 
                         std::cout << "There are no More Pointcloud Points Left in the file" << std::endl;
                         return false;
                     }
+
                 }
             }
             else if (flatBufferFileType == "bbox" ) {
@@ -553,8 +571,11 @@ namespace Potree{
             currentFile++;
 
             if (currentFile != files.end()) {
-                fileReader    = std::make_unique<ifstream>(ifstream(*currentFile, ios::in | ios::binary));
-                hasPoints     = fileReader->good();
+              reader->close();
+                  delete reader;
+                  reader = NULL;
+                  reader = new ifstream(*currentFile, ios::in | ios::binary);
+                  hasPoints = reader->good();
             }
         }
         return hasPoints;

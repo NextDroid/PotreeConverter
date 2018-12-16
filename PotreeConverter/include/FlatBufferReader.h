@@ -42,14 +42,16 @@ namespace Potree{
         Point getPoint() override;      // Declared Virtual in the base class PointReader
         AABB getAABB() override;       // Declared Virtual in the base class PointReader
         int64_t numPoints() override; // Declared Virtual in the base class PointReader
-        void close()  override ;     // Declared Virtual in the base class PointReader
-
+        void close()  ;
+        ifstream *reader;    // Declared Virtual in the base class PointReader
+        double test;
+        unsigned char *buffer;
     private:
         AABB aabb;
 
         vector<string> files;
         vector<string>::iterator currentFile;
-        std::unique_ptr<ifstream>fileReader;
+
 
         Point point;
         uint64_t pointCount;
