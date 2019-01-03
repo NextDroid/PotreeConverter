@@ -99,7 +99,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	args.addArgument("edl-enabled", "Enable Eye-Dome-Lighting.");
 	args.addArgument("show-skybox", "");
 	args.addArgument("material", "RGB, ELEVATION, INTENSITY, INTENSITY_GRADIENT, CLASSIFICATION, RETURN_NUMBER, SOURCE, LEVEL_OF_DETAIL");
-    args.addArgument("flat_buffer,b", "FlatBuffer file type,  points ||   Lanes");
+    args.addArgument("flat_buffer,b", "FlatBuffer file type options: [points || classified-points || bbox || lanes || detections || rtk]");
 	PotreeArguments a;
 
 	if (args.has("help")){

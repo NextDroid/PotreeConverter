@@ -56,6 +56,7 @@ namespace Potree{
         Point point;
         uint64_t pointCount;
         const flatbuffers::Vector<const Flatbuffer::LIDAR::Point *> *points;
+        const Flatbuffer::GroundTruth::Points *classifiedPoints;
         const flatbuffers::Vector<const Flatbuffer::GroundTruth::Vec3 *>  *rightLane,*leftLane,*spine;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::Detection>> *detectionCenter;
         const flatbuffers::Vector<flatbuffers::Offset<Flatbuffer::GroundTruth::State>> *statesFb;

@@ -160,6 +160,15 @@ namespace Potree{
                     return true;
             }
 
+            if (flatBufferFileType == "classified-points")
+            {
+                classifiedPoints = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Points>(&readerBuffer[0]);
+                pointsLength = classifiedPoints->x()->size();
+                if (pointsLength != 0) {
+                    return true;
+                }
+            }
+
                 //    For the flatbuffer file of type track bounding box pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
 
             else if (flatBufferFileType == "bbox")
@@ -459,6 +468,43 @@ namespace Potree{
                     }
 
                 }
+            }
+            else if (flatBufferFileType == "classified-points") {
+
+                if (pointsIdx < pointsLength) {
+                    point.position.x = classifiedPoints->x()->Get(pointsIdx);
+                    point.position.y = classifiedPoints->y()->Get(pointsIdx);
+                    point.position.z = classifiedPoints->z()->Get(pointsIdx);
+                    point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
+                    point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
+                    point.classification = classifiedPoints->ptType()->Get(pointsIdx);
+                    pointsIdx++;
+                    return true;
+                }
+                    //if end of 4 bytes reached, then read the next 4 bytes.
+
+                else if (pointsIdx == pointsLength) {
+                    pointsIdx = 0;
+                    if (prepareNextSegment()) {
+                        point.position.x = classifiedPoints->x()->Get(pointsIdx);
+                        point.position.y = classifiedPoints->y()->Get(pointsIdx);
+                        point.position.z = classifiedPoints->z()->Get(pointsIdx);
+                        point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
+                        point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
+                        point.classification = classifiedPoints->ptType()->Get(pointsIdx);
+                        pointsIdx++;
+                        return true;
+                    }
+                    else if (!prepareNextSegment()) {
+
+                        std::cout << "There are no more Classified Points left in the file" << std::endl;
+                        return false;
+                    }
+
+                }
+
+
+
             }
             else if (flatBufferFileType == "bbox" ) {
 
