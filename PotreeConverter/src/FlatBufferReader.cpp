@@ -38,7 +38,7 @@ using std::ios;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(1), pointsLength(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(0), pointsLength(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
 
 
         this->aabb               = aabb;
