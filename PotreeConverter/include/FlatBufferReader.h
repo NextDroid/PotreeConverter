@@ -97,6 +97,8 @@ namespace Potree{
 
 
         string flatBufferFileType;
+        int totalNumPoints;
+        int numSegmentsRead;
         int pointsIdx,bboxPointsIdx,laneIdx,detectionIdx,rtkIdx;
         int pointsLength,statesLength,rightLaneLength,leftLaneLength,spineLength, detectionLength,rtkLength;
 
