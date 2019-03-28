@@ -85,7 +85,6 @@ namespace Potree{
                 this->aabb.update(p.position);
             }
             pointCount++;
-            if(pointCount > 8e8){std::cout<<"Over -  "<<pointCount << "  "<< p<<std::endl;}
         }
 
         std::cout << "Total Number of Points in Cloud: " << totalNumPoints << std::endl;
