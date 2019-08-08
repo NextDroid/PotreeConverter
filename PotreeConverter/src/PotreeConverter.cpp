@@ -14,6 +14,7 @@
 #include "PotreeWriter.h"
 #include "LASPointWriter.hpp"
 #include "BINPointWriter.hpp"
+#include "BoostBINPointReader.hpp"
 #include "BINPointReader.hpp"
 #include "PlyPointReader.h"
 #include "XYZPointReader.hpp"
@@ -25,8 +26,7 @@
 #include <vector>
 #include <math.h>
 #include <fstream>
-
-
+#include "FlatBufferReader.h"
 
 
 using rapidjson::Document;
@@ -57,7 +57,7 @@ PointReader *PotreeConverter::createPointReader(string path, PointAttributes poi
 		reader = new PTXPointReader(path);
 	}else if(iEndsWith(path, ".ply")){
 		reader = new PlyPointReader(path);
-	}else if(iEndsWith(path, ".xyz") || iEndsWith(path, ".txt")){
+	}else if(iEndsWith(path, ".xyz") || iEndsWith(path, ".txt") || iEndsWith(path, ".csv")){
 		reader = new XYZPointReader(path, format, colorRange, intensityRange);
 	}else if(iEndsWith(path, ".pts")){
 		vector<double> intensityRange;
@@ -70,6 +70,12 @@ PointReader *PotreeConverter::createPointReader(string path, PointAttributes poi
 		reader = new XYZPointReader(path, format, colorRange, intensityRange);
  	}else if(iEndsWith(path, ".bin")){
 		reader = new BINPointReader(path, aabb, scale, pointAttributes);
+	} else if(iEndsWith(path, ".csv_bin")) {
+		reader = new BoostBINPointReader(path, aabb, scale, pointAttributes);
+	} else if(iEndsWith(path, ".fb")) {
+		reader = new FlatBufferReader(path, aabb,  flatBufferType);
+	} else {
+		std::cerr << "Unrecognized File Extension, could not create reader" << path <<std::endl;
 	}
 
 	return reader;
@@ -93,8 +99,8 @@ void PotreeConverter::prepare(){
 				fs::path pDirectoryEntry = it->path();
 				if(fs::is_regular_file(pDirectoryEntry)){
 					string filepath = pDirectoryEntry.string();
-					if(iEndsWith(filepath, ".las") 
-						|| iEndsWith(filepath, ".laz") 
+					if(iEndsWith(filepath, ".las")
+						|| iEndsWith(filepath, ".laz")
 						|| iEndsWith(filepath, ".xyz")
 						|| iEndsWith(filepath, ".pts")
 						|| iEndsWith(filepath, ".ptx")
@@ -134,6 +140,7 @@ void PotreeConverter::prepare(){
 
 AABB PotreeConverter::calculateAABB(){
 	AABB aabb;
+
 	if(aabbValues.size() == 6){
 		Vector3<double> userMin(aabbValues[0],aabbValues[1],aabbValues[2]);
 		Vector3<double> userMax(aabbValues[3],aabbValues[4],aabbValues[5]);
@@ -142,16 +149,19 @@ AABB PotreeConverter::calculateAABB(){
 		for(string source : sources){
 
 			PointReader *reader = createPointReader(source, pointAttributes);
-			
+
 			AABB lAABB = reader->getAABB();
 			aabb.update(lAABB.min);
 			aabb.update(lAABB.max);
 
 			reader->close();
 			delete reader;
+
+
+
 		}
 	}
-
+    std::cout << "AABB function is done and the calculated dimensions are :   " << std::endl ;
 	return aabb;
 }
 
@@ -204,7 +214,7 @@ void PotreeConverter::generatePage(string name){
 				}else{
 					out << "\t\t" << "viewer.setBackground(\"gradient\"); // [\"skybox\", \"gradient\", \"black\", \"white\"];\n";
 				}
-				
+
 				string descriptionEscaped = string(description);
 				std::replace(descriptionEscaped.begin(), descriptionEscaped.end(), '`', '\'');
 
@@ -212,7 +222,7 @@ void PotreeConverter::generatePage(string name){
 			}else{
 				out << line << endl;
 			}
-			
+
 		}
 
 		in.close();
@@ -220,7 +230,7 @@ void PotreeConverter::generatePage(string name){
 	}
 
 	// change lasmap template
-	if(!this->projection.empty()){ 
+	if(!this->projection.empty()){
 		ifstream in( mapTemplateSourcePath );
 		ofstream out( mapTemplateTargetPath );
 
@@ -231,36 +241,12 @@ void PotreeConverter::generatePage(string name){
 			}else{
 				out << line << endl;
 			}
-			
+
 		}
 
 		in.close();
 		out.close();
 	}
-
-	//{ // write settings
-	//	stringstream ssSettings;
-	//
-	//	ssSettings << "var sceneProperties = {" << endl;
-	//	ssSettings << "\tpath: \"" << "../resources/pointclouds/" << name << "/cloud.js\"," << endl;
-	//	ssSettings << "\tcameraPosition: null, 		// other options: cameraPosition: [10,10,10]," << endl;
-	//	ssSettings << "\tcameraTarget: null, 		// other options: cameraTarget: [0,0,0]," << endl;
-	//	ssSettings << "\tfov: 60, 					// field of view in degrees," << endl;
-	//	ssSettings << "\tsizeType: \"Adaptive\",	// other options: \"Fixed\", \"Attenuated\"" << endl;
-	//	ssSettings << "\tquality: null, 			// other options: \"Circles\", \"Interpolation\", \"Splats\"" << endl;
-	//	ssSettings << "\tmaterial: \"RGB\", 		// other options: \"Height\", \"Intensity\", \"Classification\"" << endl;
-	//	ssSettings << "\tpointLimit: 1,				// max number of points in millions" << endl;
-	//	ssSettings << "\tpointSize: 1,				// " << endl;
-	//	ssSettings << "\tnavigation: \"Orbit\",		// other options: \"Orbit\", \"Flight\"" << endl;
-	//	ssSettings << "\tuseEDL: false,				" << endl;
-	//	ssSettings << "};" << endl;
-	//
-	//
-	//	ofstream fSettings;
-	//	fSettings.open(pagedir + "/examples/" + name + ".js", ios::out);
-	//	fSettings << ssSettings.str();
-	//	fSettings.close();
-	//}
 }
 
 void writeSources(string path, vector<string> sourceFilenames, vector<int> numPoints, vector<AABB> boundingBoxes, string projection){
@@ -287,8 +273,8 @@ void writeSources(string path, vector<string> sourceFilenames, vector<int> numPo
 		Value jBounds(rapidjson::kObjectType);
 
 		{
-			Value bbMin(rapidjson::kObjectType);	
-			Value bbMax(rapidjson::kObjectType);	
+			Value bbMin(rapidjson::kObjectType);
+			Value bbMax(rapidjson::kObjectType);
 
 			bbMin.SetArray();
 			bbMin.PushBack(boundingBox.min.x, d.GetAllocator());
@@ -313,8 +299,8 @@ void writeSources(string path, vector<string> sourceFilenames, vector<int> numPo
 
 	Value jBoundingBox(rapidjson::kObjectType);
 	{
-		Value bbMin(rapidjson::kObjectType);	
-		Value bbMax(rapidjson::kObjectType);	
+		Value bbMin(rapidjson::kObjectType);
+		Value bbMax(rapidjson::kObjectType);
 
 		bbMin.SetArray();
 		bbMin.PushBack(bb.min.x, d.GetAllocator());
@@ -338,7 +324,7 @@ void writeSources(string path, vector<string> sourceFilenames, vector<int> numPo
 	//PrettyWriter<StringBuffer> writer(buffer);
 	Writer<StringBuffer> writer(buffer);
 	d.Accept(writer);
-	
+
 	if(!fs::exists(fs::path(path))){
 		fs::path pcdir(path);
 		fs::create_directories(pcdir);
@@ -349,7 +335,10 @@ void writeSources(string path, vector<string> sourceFilenames, vector<int> numPo
 	sourcesOut.close();
 }
 
+// THIS IS THE MAIN FUNCTION:
 void PotreeConverter::convert(){
+    std::cout<<"Entering the Main function:" <<std::endl;
+
 	auto start = high_resolution_clock::now();
 
 	prepare();
@@ -361,6 +350,7 @@ void PotreeConverter::convert(){
 	aabb.makeCubic();
 	cout << "cubic AABB: " << endl << aabb << endl;
 
+
 	if (diagonalFraction != 0) {
 		spacing = (float)(aabb.size.length() / diagonalFraction);
 		cout << "spacing calculated from diagonal: " << spacing << endl;
@@ -369,6 +359,7 @@ void PotreeConverter::convert(){
 	if(pageName.size() > 0){
 		generatePage(pageName);
 		workDir = workDir + "/pointclouds/" + pageName;
+		std::cout<<"working directory= "<<workDir<<std::endl;
 	}
 
 	PotreeWriter *writer = NULL;
@@ -421,8 +412,11 @@ void PotreeConverter::convert(){
 			continue;
 		}
 
-		while(reader->readNextPoint()){
+	while(reader->readNextPoint()){
 			pointsProcessed++;
+			if (pointsProcessed % 500'000 == 0) {
+				std::cout << "Point Number: " << pointsProcessed << std::endl;
+			}
 
 			Point p = reader->getPoint();
 			writer->add(p);
@@ -445,17 +439,17 @@ void PotreeConverter::convert(){
 
 				cout << ssMessage.str() << endl;
 			}
-			if((pointsProcessed % (10'000'000)) == 0){
+			if((pointsProcessed % (2'000'000)) == 0){
 				cout << "FLUSHING: ";
-			
+
 				auto start = high_resolution_clock::now();
-			
+
 				writer->flush();
-			
+
 				auto end = high_resolution_clock::now();
 				long long duration = duration_cast<milliseconds>(end-start).count();
 				float seconds = duration / 1'000.0f;
-			
+
 				cout << seconds << "s" << endl;
 			}
 
@@ -466,9 +460,9 @@ void PotreeConverter::convert(){
 		reader->close();
 		delete reader;
 
-		
+
 	}
-	
+
 	cout << "closing writer" << endl;
 	writer->flush();
 	writer->close();
@@ -481,7 +475,7 @@ void PotreeConverter::convert(){
 	auto end = high_resolution_clock::now();
 	long long duration = duration_cast<milliseconds>(end-start).count();
 
-	
+
 	cout << endl;
 	cout << "conversion finished" << endl;
 	cout << pointsProcessed << " points were processed and " << writer->numAccepted << " points ( " << percent << "% ) were written to the output. " << endl;
