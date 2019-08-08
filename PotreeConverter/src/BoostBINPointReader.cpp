@@ -78,7 +78,7 @@ void BoostBINPointReader::close(){
 	}
 }
 
-long long BoostBINPointReader::numPoints(){
+int64_t BoostBINPointReader::numPoints(){
 	return pointCount;
 }
 

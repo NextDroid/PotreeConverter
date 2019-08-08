@@ -284,7 +284,7 @@ public:
 		return *aabb;
 	}
 
-	long long numPoints(){
+	int64_t numPoints(){
 		return pointCount;
 	}
 

@@ -42,7 +42,7 @@ struct PotreeArguments {
 	StoreOption storeOption = StoreOption::ABORT_IF_EXISTS;
 	vector<string> source;
 	string outdir;
-	string flat_buffer;
+	string flatBufferType;
 	float spacing;
 	int levels;
 	string format;
@@ -99,7 +99,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	args.addArgument("edl-enabled", "Enable Eye-Dome-Lighting.");
 	args.addArgument("show-skybox", "");
 	args.addArgument("material", "RGB, ELEVATION, INTENSITY, INTENSITY_GRADIENT, CLASSIFICATION, RETURN_NUMBER, SOURCE, LEVEL_OF_DETAIL");
-    args.addArgument("flat_buffer,b", "FlatBuffer file type,  points ||   Lanes");
+    args.addArgument("flat_buffer,b", "FlatBuffer file type options: [points || classified-points || bbox || lanes || detections || rtk]");
 	PotreeArguments a;
 
 	if (args.has("help")){
@@ -129,7 +129,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 		a.pageTemplatePath = args.get("page-template").as<string>();
 	}
 	a.outdir = args.get("outdir").as<string>();
-	a.flat_buffer= args.get("flat_buffer").as<string>();
+	a.flatBufferType= args.get("flat_buffer").as<string>();
 	a.spacing = args.get("spacing").as<double>(0.0);
 	a.diagonalFraction = args.get("d").as<double>(0.0);
 	a.levels = args.get("levels").as<int>(-1);
@@ -314,7 +314,7 @@ int main(int argc, char **argv){
 		pc.edlEnabled = a.edlEnabled;
 		pc.material = a.material;
 		pc.showSkybox = a.showSkybox;
-		pc.flat_buffer = a.flat_buffer;
+		pc.flatBufferType = a.flatBufferType;
 
 		pc.convert();
 	}catch(exception &e){

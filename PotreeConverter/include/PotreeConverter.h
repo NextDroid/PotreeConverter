@@ -37,7 +37,7 @@ public:
 	float spacing;
 	int maxDepth;
 	string format;
-	string flat_buffer;
+	string flatBufferType;
 	OutputFormat outputFormat;
 	vector<string> outputAttributes;
 	vector<double> colorRange;
