@@ -22,6 +22,7 @@ SOURCE_GROUP("Header Files\\io" FILES
 	include/PointWriter.hpp
 	include/PTXPointReader.h
 	include/XYZPointReader.hpp
+		include/FlatBufferReader.h
 )
 
 SOURCE_GROUP("Source Files\\io" FILES
@@ -30,12 +31,13 @@ SOURCE_GROUP("Source Files\\io" FILES
 	src/LASPointReader.cpp
 	src/LASPointWriter.cpp
 	src/PTXPointReader.cpp
+	src/FlatBufferReader.cpp
 )
 
 SOURCE_GROUP("lib\\rapidjson" FILES ${lib_rapidjson_files})
 SOURCE_GROUP("lib\\arguments" FILES ${lib_argument_files})
 
-add_executable(PotreeConverter ${files} ${lib_rapidjson_files} ${lib_argument_files})
+add_executable(PotreeConverter ${files} ${lib_rapidjson_files} ${lib_argument_files} )
 
 target_link_libraries(PotreeConverter ${LASZIP_LIBRARY})
 
@@ -47,6 +49,9 @@ target_link_libraries(PotreeConverter ${Boost_LIBRARIES})
 find_package(LASzip REQUIRED)
 target_include_directories(PotreeConverter PRIVATE ${LASzip_INCLUDE_DIRS})
 target_link_libraries(PotreeConverter PRIVATE ${LASzip_LIBRARIES})
+
+# Link against DataSchemas:
+target_link_libraries(PotreeConverter DataSchemas)
 
 if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -pthread -lstdc++ -lm")

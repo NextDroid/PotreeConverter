@@ -9,8 +9,9 @@
 #  LASzip_LIBRARY_DIRS (not cached)
 
 # Look for LASzip in /opt/ (default install location using requirements.sh script)
-find_path(LASzip_INCLUDE_DIR NAMES laszip_api.h HINTS /opt/LAStools/LASzip/dll/)
-find_library(LASzip_LIBRARY NAMES laszip HINTS /usr/local/lib/)
+find_path(LASzip_INCLUDE_DIR NAMES laszip_api.h HINTS /opt/LASzip/include/laszip/)
+find_library(LASzip_LIBRARY NAMES liblaszip.so HINTS /usr/local/lib/)
+# set(LASzip_LIBRARY /usr/local/lib)
 
 # handle the QUIETLY and REQUIRED arguments and set LASzip_FOUND to TRUE if
 # all listed variables are TRUE

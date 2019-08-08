@@ -54,7 +54,7 @@ void BINPointReader::close(){
 	}
 }
 
-long long BINPointReader::numPoints(){
+int64_t BINPointReader::numPoints(){
 	//TODO
 
 	return 0;
