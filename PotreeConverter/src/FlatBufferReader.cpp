@@ -33,12 +33,12 @@ using std::endl;
 using std::vector;
 using std::ios;
 
-
+uint64_t totalPoints = 0;
 
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(0), pointsLength(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(0), pointsLength(0), numSegmentsRead(0), totalNumPoints(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
 
 
         this->aabb               = aabb;
@@ -85,8 +85,9 @@ namespace Potree{
                 this->aabb.update(p.position);
             }
             pointCount++;
-            if(pointCount > 671585823){std::cout<<"Over -  "<<pointCount << "  "<< p<<std::endl;}
         }
+
+        std::cout << "Total Number of Points in Cloud: " << totalNumPoints << std::endl;
 
         currentFile = files.begin();
         reader = new ifstream(*currentFile, ios::in | ios::binary);
@@ -122,30 +123,31 @@ namespace Potree{
 
             std::cout.precision(std::numeric_limits<double>::max_digits10);
 
+            int numAdditionalPoints = 0;
+
             reader->read(reinterpret_cast<char *>(buffer), 4);
             if ((reader->eof())||(reader->bad())||(reader->peek() == 0)) {
-                std::cerr << "Reader is at end of file" << std::endl;
-
+                std::cerr << "Reader is at end of file (before preparing next segment)" << std::endl;
                 return false;
             }
 
-            auto numberOfBytes = (uint32_t) buffer[3] << 24 |
+            auto numberOfBytes =
+                            (uint32_t) buffer[3] << 24 |
                             (uint32_t) buffer[2] << 16 |
                             (uint32_t) buffer[1] << 8 |
                             (uint32_t) buffer[0];
 
+//            std::cout << "Segment Size: " << numberOfBytes << std::endl;
 
             if (numberOfBytes==0) {
-                std::cerr << "Reader is at end of file" << std::endl;
-
+                std::cerr << "Reader is at end of file (after reading segment size)" << std::endl;
                 return false;
             }
             readerBuffer.clear();
             readerBuffer.reserve(numberOfBytes);
 
             if ((reader->eof())||(reader->bad())||(reader->peek() == 0)) {
-                std::cerr << "Reader is at end of file" << std::endl;
-
+                std::cerr << "Reader is at end of file (after reading segment)" << std::endl;
                 return false;
             }
             reader->read(&readerBuffer[0], numberOfBytes);
@@ -156,17 +158,16 @@ namespace Potree{
                 auto pointcloud = Flatbuffer::LIDAR::GetPointCloud(&readerBuffer[0]);
                 points          = pointcloud->points();
                 pointsLength    = points->Length();
-                if (pointsLength != 0)
-                    return true;
+                numAdditionalPoints = pointsLength;
+                totalPoints += numAdditionalPoints;
+//                std::cout << "Prepared next segment with: " << pointsLength << " new points" << "\t[total: " << totalPoints << "]" << std::endl;
             }
 
-            if (flatBufferFileType == "classified-points")
+            else if (flatBufferFileType == "classified-points")
             {
                 classifiedPoints = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Points>(&readerBuffer[0]);
                 pointsLength = classifiedPoints->x()->size();
-                if (pointsLength != 0) {
-                    return true;
-                }
+                numAdditionalPoints = pointsLength;
             }
 
                 //    For the flatbuffer file of type track bounding box pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
@@ -177,7 +178,7 @@ namespace Potree{
                 auto track     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Track>(&readerBuffer[0]);
                 statesFb       = track->states();
                 statesLength   = statesFb->Length();
-                return  true;
+                totalNumPoints += 12*pointsLength;
             }
 
                 //    For the flatbuffer file of type Lanes pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
@@ -191,7 +192,7 @@ namespace Potree{
                 rightLaneLength = rightLane->Length();
                 leftLaneLength  = leftLane->Length();
                 spineLength     = spine->Length();
-                return  true;
+                numAdditionalPoints = rightLaneLength;
             }
 
                 //    For the flatbuffer file of type Detections pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
@@ -201,7 +202,7 @@ namespace Potree{
                 auto Detection   = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Detections>(&readerBuffer[0]);
                 detectionCenter  = Detection->detections();
                 detectionLength  = detectionCenter->Length();
-                return true;
+                numAdditionalPoints = detectionLength;
             }
 
                 //    For the flatbuffer file of type rtk pointcloud using the Schema -> DataSchemas/schemas/GroundTruth.fbs
@@ -211,9 +212,20 @@ namespace Potree{
                 auto  rtk     = flatbuffers::GetRoot<Flatbuffer::GroundTruth::Poses>(&readerBuffer[0]);
                 auto rtkPose  = rtk->poses();
                 rtkLength     = rtkPose->Length();
-
-                return  true;
+                numAdditionalPoints = rtkLength;
             }
+            else {
+                std::cerr << "Unknown flatbuffer input type" << std::endl;
+                return false;
+            }
+            if (numAdditionalPoints == 0) {
+                std::cerr << "Reader is at end of file (No additional points after reading segment)" << std::endl;
+                return false;
+            }
+
+//            std::cout << "Number of Additional Points: " << numAdditionalPoints << std::endl;
+            totalNumPoints += numAdditionalPoints;
+            return true;
         }
 
         catch (std::exception& e) {
@@ -439,7 +451,7 @@ namespace Potree{
                 if (pointsIdx < pointsLength) {
                     auto fbPoints    = points->Get(pointsIdx);
                     pointsIdx++;
-                    point.position.x = fbPoints->x();
+                        point.position.x = fbPoints->x();
                     point.position.y = fbPoints->y();
                     point.position.z = fbPoints->z();
                     point.gpsTime    = fbPoints->timestamp();
@@ -459,15 +471,13 @@ namespace Potree{
                         point.gpsTime    = fbPoints->timestamp();
                         point.intensity  = fbPoints->intensity();
                         return true;
-                    }
-                    else if (!prepareNextSegment()) {
-
+                    } else {
 
                         std::cout << "There are no More Pointcloud Points Left in the file" << std::endl;
                         return false;
                     }
 
-                }
+                } else {std::cerr << "Why am I here???" << std::endl;}
             }
             else if (flatBufferFileType == "classified-points") {
 
