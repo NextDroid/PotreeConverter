@@ -635,7 +635,8 @@ namespace Potree{
             }
         }
         return hasPoints;
-    }    Point FlatBufferReader::getPoint() {
+    }
+    Point FlatBufferReader::getPoint() {
         return point;
     }
     AABB FlatBufferReader::getAABB() {
