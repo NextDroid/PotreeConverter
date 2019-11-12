@@ -451,11 +451,14 @@ namespace Potree{
                 if (pointsIdx < pointsLength) {
                     auto fbPoints    = points->Get(pointsIdx);
                     pointsIdx++;
-                        point.position.x = fbPoints->x();
+                    point.position.x = fbPoints->x();
                     point.position.y = fbPoints->y();
                     point.position.z = fbPoints->z();
                     point.gpsTime    = fbPoints->timestamp();
                     point.intensity  = fbPoints->intensity();
+                    const auto pose = fbPoints->rtkPose();
+                    std::vector<double> rtkpose = {pose.x(), pose.y(), pose.z(), pose.roll(), pose.pitch(), pose.yaw()};
+                    point.rtk_pose = rtkpose;
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
@@ -470,6 +473,10 @@ namespace Potree{
                         point.position.z = fbPoints->z();
                         point.gpsTime    = fbPoints->timestamp();
                         point.intensity  = fbPoints->intensity();
+                        const auto pose = fbPoints->rtkPose();
+                        std::vector<double> rtkpose = {pose.x(), pose.y(), pose.z(), pose.roll(), pose.pitch(), pose.yaw()};
+                        // std::cout << "RtkPose: " << pose.x() << ", " << pose.y() << ", " << pose.z() << std::endl;
+                        point.rtk_pose = rtkpose;
                         return true;
                     } else {
 

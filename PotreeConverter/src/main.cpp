@@ -85,7 +85,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	args.addArgument("color-range", "");
 	args.addArgument("intensity-range", "");
 	args.addArgument("output-format", "Output format can be BINARY, LAS or LAZ. Default is BINARY");
-	args.addArgument("output-attributes,a", "can be any combination of RGB, INTENSITY and CLASSIFICATION. Default is RGB.");
+	args.addArgument("output-attributes,a", "can be any combination of RGB, INTENSITY, CLASSIFICATION, GPS_TIME and RTK_POSE. Default is RGB.");
 	args.addArgument("scale", "Scale of the X, Y, Z coordinate in LAS and LAZ files.");
 	args.addArgument("aabb", "Bounding cube as \"minX minY minZ maxX maxY maxZ\". If not provided it is automatically computed");
 	args.addArgument("incremental", "Add new points to existing conversion");
@@ -160,7 +160,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	}
 
 	a.scale = args.get("scale").as<double>(0.0);
-	
+
 	if (args.has("aabb")) {
 		string strAABB = args.get("aabb").as<string>();
 		vector<double> aabbValues;
@@ -235,10 +235,10 @@ PotreeArguments parseArguments(int argc, char **argv){
 		exit(1);
 	}
 
-	// set default parameters 
+	// set default parameters
 	fs::path pSource(a.source[0]);
 	a.outdir = args.has("outdir") ? args.get("outdir").as<string>() : pSource.generic_string() + "_converted";
-	
+
 	if (a.diagonalFraction != 0) {
 		a.spacing = 0;
 	}else if(a.spacing == 0){
@@ -286,7 +286,7 @@ void printArguments(PotreeArguments &a){
 
 int main(int argc, char **argv){
 	cout.imbue(std::locale(""));
-	
+
 	try{
 		PotreeArguments a = parseArguments(argc, argv);
 		printArguments(a);
@@ -321,7 +321,7 @@ int main(int argc, char **argv){
 		cout << "ERROR: " << e.what() << endl;
 		return 1;
 	}
-	
+
 	return 0;
 }
 

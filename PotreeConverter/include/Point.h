@@ -5,6 +5,7 @@
 #include "Vector3.h"
 
 #include <iostream>
+#include <vector>
 
 using std::ostream;
 
@@ -22,6 +23,7 @@ public:
 	unsigned char numberOfReturns = 0;
 	unsigned short pointSourceID = 0;
 	double gpsTime = 0.0;
+	std::vector<double> rtk_pose{0};
 
 
 	Point() = default;
@@ -42,9 +44,9 @@ public:
 
 	~Point() = default;
 
-	friend ostream &operator<<( ostream &output,  const Point &value ){ 
+	friend ostream &operator<<( ostream &output,  const Point &value ){
 		output << value.position ;
-		return output;            
+		return output;
 	}
 
 };
