@@ -5,7 +5,6 @@
 #include "Vector3.h"
 
 #include <iostream>
-#include <vector>
 
 using std::ostream;
 
@@ -23,7 +22,8 @@ public:
 	unsigned char numberOfReturns = 0;
 	unsigned short pointSourceID = 0;
 	double gpsTime = 0.0;
-	std::vector<double> rtk_pose{0};
+	Vector3<double> rtk_pose{0};
+	Vector3<double> rtk_orient{0};
 
 
 	Point() = default;

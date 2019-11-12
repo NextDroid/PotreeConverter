@@ -78,6 +78,22 @@ public:
 				writer->write((const char*)&point.pointSourceID, sizeof(unsigned short));
 			} else if (attribute == PointAttribute::GPS_TIME) {
 				writer->write((const char*)&point.gpsTime, sizeof(double));
+			}  else if (attribute == PointAttribute::RTK_POSE) {
+
+				double x = point.rtk_pose.x;
+				double y = point.rtk_pose.y;
+				double z = point.rtk_pose.z;
+				double pos[3] = {x, y, z};
+				writer->write((const char*)pos, 3*sizeof(double));
+
+			}  else if (attribute == PointAttribute::RTK_ORIENT) {
+
+				double x = point.rtk_orient.x;
+				double y = point.rtk_orient.y;
+				double z = point.rtk_orient.z;
+				double pos[3] = {x, y, z};
+				writer->write((const char*)pos, 3*sizeof(double));
+
 			} else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
 				// see http://aras-p.info/texts/CompactNormalStorage.html
 				float nx = point.normal.x;
@@ -99,7 +115,7 @@ public:
 				float nx = point.normal.x;
 				float ny = point.normal.y;
 				float nz = point.normal.z;
-				
+
 				float norm1 = abs(nx) + abs(ny) + abs(nz);
 
 				nx = nx / norm1;

@@ -25,6 +25,7 @@ public:
 	static const PointAttribute NORMAL_OCT16;
 	static const PointAttribute NORMAL;
 	static const PointAttribute RTK_POSE;
+	static const PointAttribute RTK_ORIENT;
 
 	int ordinal;
 	string name;

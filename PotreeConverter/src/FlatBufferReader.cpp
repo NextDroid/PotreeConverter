@@ -456,9 +456,12 @@ namespace Potree{
                     point.position.z = fbPoints->z();
                     point.gpsTime    = fbPoints->timestamp();
                     point.intensity  = fbPoints->intensity();
-                    const auto pose = fbPoints->rtkPose();
-                    std::vector<double> rtkpose = {pose.x(), pose.y(), pose.z(), pose.roll(), pose.pitch(), pose.yaw()};
-                    point.rtk_pose = rtkpose;
+                    point.rtk_pose.x = fbPoints->rtkPose().x();
+                    point.rtk_pose.y = fbPoints->rtkPose().y();
+                    point.rtk_pose.z = fbPoints->rtkPose().z();
+                    point.rtk_orient.x = fbPoints->rtkPose().roll();
+                    point.rtk_orient.y = fbPoints->rtkPose().pitch();
+                    point.rtk_orient.z = fbPoints->rtkPose().yaw();
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
@@ -473,10 +476,12 @@ namespace Potree{
                         point.position.z = fbPoints->z();
                         point.gpsTime    = fbPoints->timestamp();
                         point.intensity  = fbPoints->intensity();
-                        const auto pose = fbPoints->rtkPose();
-                        std::vector<double> rtkpose = {pose.x(), pose.y(), pose.z(), pose.roll(), pose.pitch(), pose.yaw()};
-                        // std::cout << "RtkPose: " << pose.x() << ", " << pose.y() << ", " << pose.z() << std::endl;
-                        point.rtk_pose = rtkpose;
+                        point.rtk_pose.x = fbPoints->rtkPose().x();
+                        point.rtk_pose.y = fbPoints->rtkPose().y();
+                        point.rtk_pose.z = fbPoints->rtkPose().z();
+                        point.rtk_orient.x = fbPoints->rtkPose().roll();
+                        point.rtk_orient.y = fbPoints->rtkPose().pitch();
+                        point.rtk_orient.z = fbPoints->rtkPose().yaw();
                         return true;
                     } else {
 
