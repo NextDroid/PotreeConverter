@@ -80,19 +80,17 @@ public:
 				writer->write((const char*)&point.gpsTime, sizeof(double));
 			}  else if (attribute == PointAttribute::RTK_POSE) {
 
-				double x = point.rtk_pose.x;
-				double y = point.rtk_pose.y;
-				double z = point.rtk_pose.z;
-				double pos[3] = {x, y, z};
-				writer->write((const char*)pos, 3*sizeof(double));
+				double x = point.rtk_pose.x - aabb.min.x;
+				double y = point.rtk_pose.y - aabb.min.y;
+				double z = point.rtk_pose.z - aabb.min.z;
+				std::vector<double> pos = {x, y, z};
+
+				writer->write(reinterpret_cast<char*>(&pos[0]), std::streamsize(pos.size()*sizeof(double)));
 
 			}  else if (attribute == PointAttribute::RTK_ORIENT) {
 
-				double x = point.rtk_orient.x;
-				double y = point.rtk_orient.y;
-				double z = point.rtk_orient.z;
-				double pos[3] = {x, y, z};
-				writer->write((const char*)pos, 3*sizeof(double));
+				std::vector<double> pos = {point.rtk_orient.x, point.rtk_orient.y, point.rtk_orient.z};
+				writer->write(reinterpret_cast<char*>(&pos[0]), std::streamsize(pos.size()*sizeof(double)));
 
 			} else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
 				// see http://aras-p.info/texts/CompactNormalStorage.html

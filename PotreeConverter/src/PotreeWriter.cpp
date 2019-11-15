@@ -313,9 +313,6 @@ void PWNode::flush(){
 			writer->write(e_c);
 		}
 
-		if (append) {
-			std::cout << "Vinay - WriteToDisk: " << writer->numPoints << ", " << this->numAccepted << std::endl;
-		}
 
 		if(append && (writer->numPoints != this->numAccepted)){
 			cout << "writeToDisk " << writer->numPoints  << " != " << this->numAccepted << endl;

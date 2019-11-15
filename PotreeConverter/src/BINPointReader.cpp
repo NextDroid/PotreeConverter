@@ -120,9 +120,9 @@ bool BINPointReader::readNextPoint(){
 			} else if (attribute == PointAttribute::RTK_POSE) {
 
 				double* dBuffer = reinterpret_cast<double*>(buffer + offset);
-				point.rtk_pose.x = dBuffer[0];
-				point.rtk_pose.y = dBuffer[1];
-				point.rtk_pose.z = dBuffer[2];
+				point.rtk_pose.x = dBuffer[0] + aabb.min.x;
+				point.rtk_pose.y = dBuffer[1] + aabb.min.y;
+				point.rtk_pose.z = dBuffer[2] + aabb.min.z;
 
 			} else if (attribute == PointAttribute::RTK_ORIENT) {
 
