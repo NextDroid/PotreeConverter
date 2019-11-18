@@ -500,6 +500,15 @@ namespace Potree{
                     point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
                     point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                     point.classification = classifiedPoints->ptType()->Get(pointsIdx);
+
+                    const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
+                    point.rtk_pose.x = rtkPoses->x();
+                    point.rtk_pose.y = rtkPoses->y();
+                    point.rtk_pose.z = rtkPoses->z();
+                    point.rtk_orient.x = rtkPoses->roll();
+                    point.rtk_orient.y = rtkPoses->pitch();
+                    point.rtk_orient.z = rtkPoses->yaw();
+
                     pointsIdx++;
                     return true;
                 }
@@ -514,6 +523,15 @@ namespace Potree{
                         point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
                         point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                         point.classification = classifiedPoints->ptType()->Get(pointsIdx);
+
+                        const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
+                        point.rtk_pose.x = rtkPoses->x();
+                        point.rtk_pose.y = rtkPoses->y();
+                        point.rtk_pose.z = rtkPoses->z();
+                        point.rtk_orient.x = rtkPoses->roll();
+                        point.rtk_orient.y = rtkPoses->pitch();
+                        point.rtk_orient.z = rtkPoses->yaw();
+
                         pointsIdx++;
                         return true;
                     }
