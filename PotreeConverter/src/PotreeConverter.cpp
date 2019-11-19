@@ -134,6 +134,10 @@ void PotreeConverter::prepare(){
 			pointAttributes.add(PointAttribute::GPS_TIME);
 		} else if(attribute == "NORMAL"){
 			pointAttributes.add(PointAttribute::NORMAL_OCT16);
+		} else if(attribute == "RTK_POSE"){
+			pointAttributes.add(PointAttribute::RTK_POSE);
+		} else if(attribute == "RTK_ORIENT"){
+			pointAttributes.add(PointAttribute::RTK_ORIENT);
 		}
 	}
 }

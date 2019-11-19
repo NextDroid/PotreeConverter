@@ -15,6 +15,8 @@ const PointAttribute PointAttribute::GPS_TIME				= PointAttribute(7, "GPS_TIME",
 const PointAttribute PointAttribute::NORMAL_SPHEREMAPPED	= PointAttribute(8, "NORMAL_SPHEREMAPPED",	2, 2);
 const PointAttribute PointAttribute::NORMAL_OCT16			= PointAttribute(9, "NORMAL_OCT16",			2, 2);
 const PointAttribute PointAttribute::NORMAL					= PointAttribute(10, "NORMAL",				3, 12);
+const PointAttribute PointAttribute::RTK_POSE				= PointAttribute(11, "RTK_POSE",			3, 24);
+const PointAttribute PointAttribute::RTK_ORIENT				= PointAttribute(12, "RTK_ORIENT",			3, 24);
 
 PointAttribute PointAttribute::fromString(string name){
 	if(name == "POSITION_CARTESIAN"){
@@ -37,12 +39,16 @@ PointAttribute PointAttribute::fromString(string name){
 		return PointAttribute::NORMAL_OCT16;
 	}else if(name == "NORMAL"){
 		return PointAttribute::NORMAL;
+	}else if(name == "RTK_POSE"){
+		return PointAttribute::RTK_POSE;
+	}else if(name == "RTK_ORIENT"){
+		return PointAttribute::RTK_ORIENT;
 	}
 
 	throw PotreeException("Invalid PointAttribute name: '" + name + "'");
 }
 
-bool operator==(const PointAttribute& lhs, const PointAttribute& rhs){ 
+bool operator==(const PointAttribute& lhs, const PointAttribute& rhs){
 	return lhs.ordinal == rhs.ordinal;
 }
 

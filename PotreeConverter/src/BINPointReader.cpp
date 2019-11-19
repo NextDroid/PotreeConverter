@@ -24,7 +24,7 @@ BINPointReader::BINPointReader(string path,  AABB aabb, double scale, PointAttri
 	this->aabb = aabb;
 	this->scale = scale;
 	this->attributes = pointAttributes;
-	
+
 	if(fs::is_directory(path)){
 		// if directory is specified, find all las and laz files inside directory
 
@@ -85,7 +85,7 @@ bool BINPointReader::readNextPoint(){
             delete [] buffer;
 			return false;
 		}
-		
+
 		int offset = 0;
 		for(int i = 0; i < attributes.size(); i++){
 			const PointAttribute attribute = attributes[i];
@@ -117,6 +117,20 @@ bool BINPointReader::readNextPoint(){
 			} else if (attribute == PointAttribute::GPS_TIME) {
 				double* dBuffer = reinterpret_cast<double*>(buffer + offset);
 				point.gpsTime = dBuffer[0];
+			} else if (attribute == PointAttribute::RTK_POSE) {
+
+				double* dBuffer = reinterpret_cast<double*>(buffer + offset);
+				point.rtk_pose.x = dBuffer[0] + aabb.min.x;
+				point.rtk_pose.y = dBuffer[1] + aabb.min.y;
+				point.rtk_pose.z = dBuffer[2] + aabb.min.z;
+
+			} else if (attribute == PointAttribute::RTK_ORIENT) {
+
+				double* dBuffer = reinterpret_cast<double*>(buffer + offset);
+				point.rtk_orient.x = dBuffer[0];
+				point.rtk_orient.y = dBuffer[1];
+				point.rtk_orient.z = dBuffer[2];
+
 			} else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
 				// see http://aras-p.info/texts/CompactNormalStorage.html
 				unsigned char* ucBuffer = reinterpret_cast<unsigned char*>(buffer+offset);
@@ -184,7 +198,7 @@ bool BINPointReader::readNextPoint(){
 
 			offset += attribute.byteSize;
 		}
-		
+
 		delete [] buffer;
 	}
 

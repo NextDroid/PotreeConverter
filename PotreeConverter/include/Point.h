@@ -22,6 +22,8 @@ public:
 	unsigned char numberOfReturns = 0;
 	unsigned short pointSourceID = 0;
 	double gpsTime = 0.0;
+	Vector3<double> rtk_pose{0};
+	Vector3<double> rtk_orient{0};
 
 
 	Point() = default;
@@ -42,9 +44,9 @@ public:
 
 	~Point() = default;
 
-	friend ostream &operator<<( ostream &output,  const Point &value ){ 
+	friend ostream &operator<<( ostream &output,  const Point &value ){
 		output << value.position ;
-		return output;            
+		return output;
 	}
 
 };

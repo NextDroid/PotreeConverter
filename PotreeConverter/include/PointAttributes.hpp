@@ -24,6 +24,8 @@ public:
 	static const PointAttribute NORMAL_SPHEREMAPPED;
 	static const PointAttribute NORMAL_OCT16;
 	static const PointAttribute NORMAL;
+	static const PointAttribute RTK_POSE;
+	static const PointAttribute RTK_ORIENT;
 
 	int ordinal;
 	string name;
@@ -62,8 +64,8 @@ public:
 		return (int)attributes.size();
 	}
 
-	PointAttribute& operator[](int i) { 
-		return attributes[i]; 
+	PointAttribute& operator[](int i) {
+		return attributes[i];
 	}
 
 
