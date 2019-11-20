@@ -41,6 +41,11 @@ namespace Potree{
     FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(0), pointsLength(0), numSegmentsRead(0), totalNumPoints(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
 
 
+        std::cout << "========================" << std::endl;
+        std::cout << "FLATBUFFER READER AABB: " << aabb;
+        std::cout << "========================" << std::endl;
+
+
         this->aabb               = aabb;
         this->flatBufferFileType = flatBufferType;
         buffer = new unsigned char[4];
@@ -73,21 +78,23 @@ namespace Potree{
 
         //      Calculate AABB: for every point available in the flatbuffer file override
 
-        pointCount = 0;
-        while(readNextPoint()) {
+        if (!this->aabb.isInitialized) {
+            std::cout << "Provided AABB is uninitialized - computing AABB" << std::endl;
+            pointCount = 0;
+            while(readNextPoint()) {
 
-            const Point p = getPoint();
+                const Point p = getPoint();
 
-            if (pointCount == 0) {
-                this->aabb = AABB(p.position);
+                if (pointCount == 0) {
+                    this->aabb = AABB(p.position);
+                }
+                else {
+                    this->aabb.update(p.position);
+                }
+                pointCount++;
             }
-            else {
-                this->aabb.update(p.position);
-            }
-            pointCount++;
+            std::cout << "Total Number of Points in Cloud: " << totalNumPoints << std::endl;
         }
-
-        std::cout << "Total Number of Points in Cloud: " << totalNumPoints << std::endl;
 
         currentFile = files.begin();
         reader = new ifstream(*currentFile, ios::in | ios::binary);
