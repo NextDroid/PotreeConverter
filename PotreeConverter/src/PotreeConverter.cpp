@@ -349,7 +349,7 @@ void PotreeConverter::convert(){
 
 	long long pointsProcessed = 0;
 
-	AABB aabb = calculateAABB();
+	aabb = calculateAABB();
 	cout << "AABB: " << endl << aabb << endl;
 	aabb.makeCubic();
 	cout << "cubic AABB: " << endl << aabb << endl;

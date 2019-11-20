@@ -21,23 +21,27 @@ public:
 	Vector3<double> min;
 	Vector3<double> max;
 	Vector3<double> size;
+	bool isInitialized;
 
 	AABB(){
 		min = Vector3<double>(std::numeric_limits<float>::max());
 		max = Vector3<double>(-std::numeric_limits<float>::max());
 		size = Vector3<double>(std::numeric_limits<float>::max());
+		isInitialized = false;
 	}
 
 	AABB(const Vector3<double> &p) {
 		min = p;
 		max = p;
 		size = max-min;
+		isInitialized = true;
 	}
 
 	AABB(Vector3<double> min, Vector3<double> max){
 		this->min = min;
 		this->max = max;
 		size = max-min;
+		isInitialized = true;
 	}
 
 	bool isInside(const Vector3<double> &p){
@@ -62,6 +66,7 @@ public:
 		max.z = std::max(max.z, point.z);
 
 		size = max - min;
+		isInitialized = true;
 	}
 
 	void update(const AABB &aabb){
@@ -78,6 +83,7 @@ public:
 		output << "min: " << value.min << endl;
 		output << "max: " << value.max << endl;
 		output << "size: " << value.size << endl;
+		output << "initialized: " << std::boolalpha << value.isInitialized << endl;
 		return output;
 	}
 
