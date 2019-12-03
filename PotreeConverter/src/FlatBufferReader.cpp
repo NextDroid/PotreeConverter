@@ -160,7 +160,7 @@ namespace Potree{
             reader->read(&readerBuffer[0], numberOfBytes);
             //    For the flatbuffer file of type pointcloud points using the Schema -> DataSchemas/schemas/LIDARWORLD.fbs
 
-            if (flatBufferFileType == "point")
+            if (flatBufferFileType == "points")
             {
                 auto pointcloud = Flatbuffer::LIDAR::GetPointCloud(&readerBuffer[0]);
                 points          = pointcloud->points();
@@ -452,7 +452,7 @@ namespace Potree{
 
         bool hasPoints = reader->good();
         if(hasPoints ) {
-            if (flatBufferFileType == "point" ) {
+            if (flatBufferFileType == "points" ) {
                 // check if the end of 4 bytes segment reached
 
                 if (pointsIdx < pointsLength) {
@@ -658,6 +658,10 @@ namespace Potree{
                         return false;
                     }
                 }
+            }
+            else {
+                std::cerr << "Unknown flatbuffer type specified: " << flatBufferFileType << std::endl;
+                exit(1);
             }
         }
         else  {
