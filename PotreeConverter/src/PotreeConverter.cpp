@@ -138,6 +138,8 @@ void PotreeConverter::prepare(){
 			pointAttributes.add(PointAttribute::RTK_POSE);
 		} else if(attribute == "RTK_ORIENT"){
 			pointAttributes.add(PointAttribute::RTK_ORIENT);
+		} else if(attribute == "DUAL_PLUS_CONFIDENCE") {
+			pointAttributes.add(PointAttribute::DUAL_PLUS_CONFIDENCE);
 		}
 	}
 }

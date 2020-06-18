@@ -191,6 +191,9 @@ bool BINPointReader::readNextPoint(){
 				point.normal.x = fBuffer[0];
 				point.normal.y = fBuffer[1];
 				point.normal.z = fBuffer[2];
+			} else if (attribute == PointAttribute::DUAL_PLUS_CONFIDENCE) {
+				uint16_t* iBuffer = reinterpret_cast<uint16_t*>(buffer+offset);
+				point.dualPlusConfidence = iBuffer[0];
 			} else {
 				cout << "ERROR: attribute reader not implemented: " << attribute.name << endl;
 				exit(1);
