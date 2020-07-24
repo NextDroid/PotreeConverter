@@ -509,7 +509,7 @@ namespace Potree{
                     point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
                     point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                     point.classification = classifiedPoints->ptType()->Get(pointsIdx);
-                    //point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
+                    point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
 
                     const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                     point.rtk_pose.x = rtkPoses->x();
@@ -533,7 +533,7 @@ namespace Potree{
                         point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
                         point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                         point.classification = classifiedPoints->ptType()->Get(pointsIdx);
-                        //point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
+                        point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
 
                         const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                         point.rtk_pose.x = rtkPoses->x();
