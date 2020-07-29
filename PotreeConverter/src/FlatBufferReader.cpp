@@ -469,6 +469,7 @@ namespace Potree{
                     point.rtk_orient.x = fbPoints->rtkPose().roll();
                     point.rtk_orient.y = fbPoints->rtkPose().pitch();
                     point.rtk_orient.z = fbPoints->rtkPose().yaw();
+                    point.dualPlusConfidence = fbPoints->dualPlusConfidence();
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
@@ -489,6 +490,7 @@ namespace Potree{
                         point.rtk_orient.x = fbPoints->rtkPose().roll();
                         point.rtk_orient.y = fbPoints->rtkPose().pitch();
                         point.rtk_orient.z = fbPoints->rtkPose().yaw();
+                        point.dualPlusConfidence = fbPoints->dualPlusConfidence();
                         return true;
                     } else {
 
@@ -507,6 +509,7 @@ namespace Potree{
                     point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
                     point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                     point.classification = classifiedPoints->ptType()->Get(pointsIdx);
+                    point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
 
                     const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                     point.rtk_pose.x = rtkPoses->x();
@@ -530,6 +533,7 @@ namespace Potree{
                         point.intensity  = classifiedPoints->intensity()->Get(pointsIdx);
                         point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                         point.classification = classifiedPoints->ptType()->Get(pointsIdx);
+                        point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
 
                         const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                         point.rtk_pose.x = rtkPoses->x();

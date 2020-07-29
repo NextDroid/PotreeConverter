@@ -24,7 +24,7 @@ public:
 	double gpsTime = 0.0;
 	Vector3<double> rtk_pose{0};
 	Vector3<double> rtk_orient{0};
-
+	uint16_t dualPlusConfidence = 0;
 
 	Point() = default;
 
