@@ -143,6 +143,10 @@ public:
 			} else if(attribute == PointAttribute::DUAL_PLUS_CONFIDENCE) {
 				writer->write((const char*)&point.dualPlusConfidence, sizeof(uint16_t));
 			}
+			else if(attribute == PointAttribute::GEO_COORDS) {
+				writer->write((const char*)&point.latitude, sizeof(double));
+			    writer->write((const char*)&point.longitude, sizeof(double));
+			}
 		}
 
 		numPoints++;

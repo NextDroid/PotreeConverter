@@ -27,6 +27,7 @@ public:
 	static const PointAttribute RTK_POSE;
 	static const PointAttribute RTK_ORIENT;
 	static const PointAttribute DUAL_PLUS_CONFIDENCE;
+	static const PointAttribute GEO_COORDS;
 
 	int ordinal;
 	string name;
