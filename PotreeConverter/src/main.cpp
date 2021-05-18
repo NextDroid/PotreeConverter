@@ -85,7 +85,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	args.addArgument("color-range", "");
 	args.addArgument("intensity-range", "");
 	args.addArgument("output-format", "Output format can be BINARY, LAS or LAZ. Default is BINARY");
-	args.addArgument("output-attributes,a", "can be any combination of RGB, INTENSITY, CLASSIFICATION, GPS_TIME, RTK_POSE, RTK_ORIENT, DUAL_PLUS_CONFIDENCE AND GEO_COORDS. Default is RGB.");
+	args.addArgument("output-attributes,a", "can be any combination of RGB, INTENSITY, CLASSIFICATION, GPS_TIME, RTK_POSE, RTK_ORIENT, DUAL_PLUS_CONFIDENCE AND GEO_COORDINATES. Default is RGB.");
 	args.addArgument("scale", "Scale of the X, Y, Z coordinate in LAS and LAZ files.");
 	args.addArgument("aabb", "Bounding cube as \"minX minY minZ maxX maxY maxZ\". If not provided it is automatically computed");
 	args.addArgument("incremental", "Add new points to existing conversion");

@@ -194,7 +194,7 @@ bool BINPointReader::readNextPoint(){
 			} else if (attribute == PointAttribute::DUAL_PLUS_CONFIDENCE) {
 				uint16_t* iBuffer = reinterpret_cast<uint16_t*>(buffer+offset);
 				point.dualPlusConfidence = iBuffer[0];
-			} else if (attribute == PointAttribute::GEO_COORDS) {
+			} else if (attribute == PointAttribute::GEO_COORDINATES) {
 				double* gBuffer = reinterpret_cast<double*>(buffer+offset);
 				point.latitude = gBuffer[0];
 				point.longitude = gBuffer[1];
