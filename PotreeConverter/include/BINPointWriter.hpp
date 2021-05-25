@@ -145,7 +145,7 @@ public:
 			}
 			else if(attribute == PointAttribute::GEO_COORDINATES) {
 				writer->write((const char*)&point.latitude, sizeof(double));
-			    writer->write((const char*)&point.longitude, sizeof(double));
+				writer->write((const char*)&point.longitude, sizeof(double));
 			}
 		}
 

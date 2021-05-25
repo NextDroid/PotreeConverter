@@ -538,7 +538,7 @@ namespace Potree{
                         point.gpsTime = classifiedPoints->timestamp()->Get(pointsIdx);
                         point.classification = classifiedPoints->ptType()->Get(pointsIdx);
                         point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
-                        
+
                         const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                         point.rtk_pose.x = rtkPoses->x();
                         point.rtk_pose.y = rtkPoses->y();
