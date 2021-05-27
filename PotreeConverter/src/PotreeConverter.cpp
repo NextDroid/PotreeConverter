@@ -140,8 +140,11 @@ void PotreeConverter::prepare(){
 			pointAttributes.add(PointAttribute::RTK_ORIENT);
 		} else if(attribute == "DUAL_PLUS_CONFIDENCE") {
 			pointAttributes.add(PointAttribute::DUAL_PLUS_CONFIDENCE);
-		} else if(attribute == "GEO_COORDINATES") {
-			pointAttributes.add(PointAttribute::GEO_COORDINATES);
+		} else if(attribute == "LATITUDE") {
+			pointAttributes.add(PointAttribute::LATITUDE);
+		}
+		else if(attribute == "LONGITUDE") {
+			pointAttributes.add(PointAttribute::LONGITUDE);
 		}
 	}
 }
