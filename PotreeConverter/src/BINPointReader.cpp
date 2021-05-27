@@ -131,7 +131,7 @@ bool BINPointReader::readNextPoint(){
 				point.rtk_orient.y = dBuffer[1];
 				point.rtk_orient.z = dBuffer[2];
 
-			} else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
+			}else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
 				// see http://aras-p.info/texts/CompactNormalStorage.html
 				unsigned char* ucBuffer = reinterpret_cast<unsigned char*>(buffer+offset);
 				unsigned char bx = ucBuffer[0];

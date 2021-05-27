@@ -142,8 +142,7 @@ void PotreeConverter::prepare(){
 			pointAttributes.add(PointAttribute::DUAL_PLUS_CONFIDENCE);
 		} else if(attribute == "LATITUDE") {
 			pointAttributes.add(PointAttribute::LATITUDE);
-		}
-		else if(attribute == "LONGITUDE") {
+		} else if(attribute == "LONGITUDE") {
 			pointAttributes.add(PointAttribute::LONGITUDE);
 		}
 	}
