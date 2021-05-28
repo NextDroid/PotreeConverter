@@ -3,7 +3,7 @@ project(PotreeConverter)
 set(RAPIDJSON_INCLUDE_DIR lib/rapidjson/include)
 set(ARGUMENTS_INCLUDE_DIR lib/arguments)
 
-file(GLOB_RECURSE files src/*.cpp include/*.h include/*.hpp )
+file(GLOB_RECURSE files src/*.cpp include/*.h include/*.hpp ${DATASCHEMAS_SRC_DIR}/*.cpp)
 file(GLOB_RECURSE lib_rapidjson_files ${RAPIDJSON_INCLUDE_DIR}/* )
 file(GLOB_RECURSE lib_argument_files ${ARGUMENTS_INCLUDE_DIR}/* )
 
@@ -49,6 +49,10 @@ target_link_libraries(PotreeConverter ${Boost_LIBRARIES})
 find_package(LASzip REQUIRED)
 target_include_directories(PotreeConverter PRIVATE ${LASzip_INCLUDE_DIRS})
 target_link_libraries(PotreeConverter PRIVATE ${LASzip_LIBRARIES})
+
+# Link against GeographicLib:
+find_library(Geographic NAMES Geographic)
+target_link_libraries(PotreeConverter ${Geographic})
 
 # Link against DataSchemas:
 target_link_libraries(PotreeConverter DataSchemas)

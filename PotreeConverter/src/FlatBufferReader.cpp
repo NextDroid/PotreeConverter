@@ -26,7 +26,6 @@
 #include "Point.h"
 #include "PointReader.h"
 
-
 using std::ifstream;
 using std::cout;
 using std::endl;
@@ -38,13 +37,14 @@ uint64_t totalPoints = 0;
 namespace Potree{
 
 
-    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType ) :  pointsIdx(0), pointsLength(0), numSegmentsRead(0), totalNumPoints(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
+    FlatBufferReader::FlatBufferReader(string path, AABB aabb,  string flatBufferType, string metadataProcessingFile ) :  pointsIdx(0), pointsLength(0), numSegmentsRead(0), totalNumPoints(0), bboxPointsIdx(0), laneIdx(0), detectionIdx(0), rtkIdx(0) {
 
 
         std::cout << "========================" << std::endl;
         std::cout << "FLATBUFFER READER AABB: " << aabb;
         std::cout << "========================" << std::endl;
 
+        vtmMetadata = parseVTMmetadata(metadataProcessingFile);
 
         this->aabb               = aabb;
         this->flatBufferFileType = flatBufferType;
@@ -470,8 +470,11 @@ namespace Potree{
                     point.rtk_orient.y = fbPoints->rtkPose().pitch();
                     point.rtk_orient.z = fbPoints->rtkPose().yaw();
                     point.dualPlusConfidence = fbPoints->dualPlusConfidence();
-                    point.latitude = fbPoints->latitude();
-                    point.longitude = fbPoints->longitude();
+                    auto latlon = VTMToLatLon(std::make_tuple(point.position.x, point.position.y, point.position.z),
+                                              std::make_tuple(vtmMetadata.VTMoriginLatitude, vtmMetadata.VTMoriginLongitude),
+                                              vtmMetadata.scaleFactor);
+                    point.latitude = std::get<0>(latlon);
+                    point.longitude = std::get<1>(latlon);
                     return true;
                 }
                     //if end of 4 bytes reached, then read the next 4 bytes.
@@ -493,8 +496,11 @@ namespace Potree{
                         point.rtk_orient.y = fbPoints->rtkPose().pitch();
                         point.rtk_orient.z = fbPoints->rtkPose().yaw();
                         point.dualPlusConfidence = fbPoints->dualPlusConfidence();
-                        point.latitude = fbPoints->latitude();
-                        point.longitude = fbPoints->longitude();
+                        auto latlon = VTMToLatLon(std::make_tuple(point.position.x, point.position.y, point.position.z),
+                                                  std::make_tuple(vtmMetadata.VTMoriginLatitude, vtmMetadata.VTMoriginLongitude),
+                                                  vtmMetadata.scaleFactor);
+                        point.latitude = std::get<0>(latlon);
+                        point.longitude = std::get<1>(latlon);
                         return true;
                     } else {
 

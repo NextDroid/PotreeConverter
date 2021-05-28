@@ -73,7 +73,7 @@ PointReader *PotreeConverter::createPointReader(string path, PointAttributes poi
 	} else if(iEndsWith(path, ".csv_bin")) {
 		reader = new BoostBINPointReader(path, aabb, scale, pointAttributes);
 	} else if(iEndsWith(path, ".fb")) {
-		reader = new FlatBufferReader(path, aabb,  flatBufferType);
+		reader = new FlatBufferReader(path, aabb,  flatBufferType, metadataProcessingFile);
 	} else {
 		std::cerr << "Unrecognized File Extension, could not create reader" << path <<std::endl;
 	}
@@ -140,9 +140,8 @@ void PotreeConverter::prepare(){
 			pointAttributes.add(PointAttribute::RTK_ORIENT);
 		} else if(attribute == "DUAL_PLUS_CONFIDENCE") {
 			pointAttributes.add(PointAttribute::DUAL_PLUS_CONFIDENCE);
-		} else if(attribute == "LATITUDE") {
+		} else if(attribute == "GEOGRAPHICAL_COORDINATES") {
 			pointAttributes.add(PointAttribute::LATITUDE);
-		} else if(attribute == "LONGITUDE") {
 			pointAttributes.add(PointAttribute::LONGITUDE);
 		}
 	}

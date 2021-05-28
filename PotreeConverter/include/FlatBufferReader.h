@@ -18,7 +18,7 @@
 #include <DataSchemas/Lidar_generated.h>
 #include <DataSchemas/GroundTruth_generated.h>
 
-
+#include "functions/VTM_functions.h"
 
 using std::string;
 
@@ -34,7 +34,7 @@ namespace Potree{
 
     public:
 
-        FlatBufferReader(string path, AABB aabb,  string flatBufferType);
+        FlatBufferReader(string path, AABB aabb,  string flatBufferType, string metadataProcessingFile);
 
 
         ~FlatBufferReader();
@@ -87,7 +87,7 @@ namespace Potree{
         std::vector<LanePoints> LanePoints;
         std::vector<egoPoints>ego;
 
-
+        VTMmetadata vtmMetadata;
 
         bool prepareNextSegment();
 
