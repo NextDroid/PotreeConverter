@@ -146,6 +146,9 @@ public:
 				writer->write((const char*)&point.latitude, sizeof(double));
 			}else if(attribute == PointAttribute::LONGITUDE) {
 				writer->write((const char*)&point.longitude, sizeof(double));
+			}else if(attribute == PointAttribute::ALTITUDE) {
+				auto altitude = point.position.z;
+				writer->write((const char*)&altitude, sizeof(double));
 			}
 		}
 

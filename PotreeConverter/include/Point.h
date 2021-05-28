@@ -27,6 +27,7 @@ public:
 	uint16_t dualPlusConfidence = 0;
 	double latitude = 0;
 	double longitude = 0;
+	double altitude = 0;
 
 	Point() = default;
 

@@ -197,9 +197,12 @@ bool BINPointReader::readNextPoint(){
 			} else if (attribute == PointAttribute::LATITUDE) {
 				double* gBuffer = reinterpret_cast<double*>(buffer+offset);
 				point.latitude = gBuffer[0];
-			}else if (attribute == PointAttribute::LONGITUDE) {
+			} else if (attribute == PointAttribute::LONGITUDE) {
 				double* gBuffer = reinterpret_cast<double*>(buffer+offset);
 				point.longitude = gBuffer[0];
+			} else if (attribute == PointAttribute::ALTITUDE) {
+				double* iBuffer = reinterpret_cast<double*>(buffer+offset);
+				point.altitude = iBuffer[0] ;
 			} else {
 				cout << "ERROR: attribute reader not implemented: " << attribute.name << endl;
 				exit(1);

@@ -20,6 +20,8 @@ const PointAttribute PointAttribute::RTK_ORIENT				= PointAttribute(12, "RTK_ORI
 const PointAttribute PointAttribute::DUAL_PLUS_CONFIDENCE	= PointAttribute(13, "DUAL_PLUS_CONFIDENCE",1, 2);
 const PointAttribute PointAttribute::LATITUDE				= PointAttribute(14, "LATITUDE",			1, 8);
 const PointAttribute PointAttribute::LONGITUDE				= PointAttribute(15, "LONGITUDE",			1, 8);
+const PointAttribute PointAttribute::ALTITUDE				= PointAttribute(16, "ALTITUDE",			1, 8);
+
 
 PointAttribute PointAttribute::fromString(string name){
 	if(name == "POSITION_CARTESIAN"){
@@ -52,6 +54,8 @@ PointAttribute PointAttribute::fromString(string name){
 		return PointAttribute::LATITUDE;
 	} else if (name == "LONGITUDE") {
 		return PointAttribute::LONGITUDE;
+	} else if (name == "ALTITUDE") {
+		return PointAttribute::ALTITUDE;
 	}
 
 	throw PotreeException("Invalid PointAttribute name: '" + name + "'");

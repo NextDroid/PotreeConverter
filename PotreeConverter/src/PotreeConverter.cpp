@@ -143,6 +143,7 @@ void PotreeConverter::prepare(){
 		} else if(attribute == "GEOGRAPHICAL_COORDINATES") {
 			pointAttributes.add(PointAttribute::LATITUDE);
 			pointAttributes.add(PointAttribute::LONGITUDE);
+			pointAttributes.add(PointAttribute::ALTITUDE);
 		}
 	}
 }
