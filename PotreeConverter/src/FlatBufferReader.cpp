@@ -523,11 +523,11 @@ namespace Potree{
                     point.classification = classifiedPoints->ptType()->Get(pointsIdx);
                     point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
                     auto latlon = VTMToLatLon(std::make_tuple(point.position.x, point.position.y, point.position.z),
-                    std::make_tuple(vtmMetadata.VTMoriginLatitude, vtmMetadata.VTMoriginLongitude),
-                        vtmMetadata.scaleFactor);
-                        point.latitude = std::get<0>(latlon);
-                        point.longitude = std::get<1>(latlon);
-                        point.altitude = point.position.z;
+                                              std::make_tuple(vtmMetadata.VTMoriginLatitude, vtmMetadata.VTMoriginLongitude),
+                                              vtmMetadata.scaleFactor);
+                    point.latitude = std::get<0>(latlon);
+                    point.longitude = std::get<1>(latlon);
+                    point.altitude = point.position.z;
 
                     const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                     point.rtk_pose.x = rtkPoses->x();
@@ -553,11 +553,11 @@ namespace Potree{
                         point.classification = classifiedPoints->ptType()->Get(pointsIdx);
                         point.dualPlusConfidence = classifiedPoints->dualPlusConfidence()->Get(pointsIdx);
                         auto latlon = VTMToLatLon(std::make_tuple(point.position.x, point.position.y, point.position.z),
-                             std::make_tuple(vtmMetadata.VTMoriginLatitude, vtmMetadata.VTMoriginLongitude),
-                             vtmMetadata.scaleFactor);
-                             point.latitude = std::get<0>(latlon);
-                             point.longitude = std::get<1>(latlon);
-                             point.altitude = point.position.z;
+                                                  std::make_tuple(vtmMetadata.VTMoriginLatitude, vtmMetadata.VTMoriginLongitude),
+                                                  vtmMetadata.scaleFactor);
+                        point.latitude = std::get<0>(latlon);
+                        point.longitude = std::get<1>(latlon);
+                        point.altitude = point.position.z;
 
                         const auto rtkPoses = classifiedPoints->rtkPoses()->Get(pointsIdx);
                         point.rtk_pose.x = rtkPoses->x();
