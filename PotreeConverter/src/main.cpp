@@ -67,7 +67,8 @@ struct PotreeArguments {
 	bool edlEnabled = false;
 	bool showSkybox = false;
 	string material = "RGB";
-    string executablePath;
+	string executablePath;
+	string metadataProcessingFile;
 };
 
 PotreeArguments parseArguments(int argc, char **argv){
@@ -85,7 +86,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	args.addArgument("color-range", "");
 	args.addArgument("intensity-range", "");
 	args.addArgument("output-format", "Output format can be BINARY, LAS or LAZ. Default is BINARY");
-	args.addArgument("output-attributes,a", "can be any combination of RGB, INTENSITY, CLASSIFICATION, GPS_TIME, RTK_POSE, RTK_ORIENT, and DUAL_PLUS_CONFIDENCE. Default is RGB.");
+	args.addArgument("output-attributes,a", "can be any combination of RGB, INTENSITY, CLASSIFICATION, GPS_TIME, RTK_POSE, RTK_ORIENT, DUAL_PLUS_CONFIDENCE, and GEOGRAPHICAL_COORDINATES. Default is RGB.");
 	args.addArgument("scale", "Scale of the X, Y, Z coordinate in LAS and LAZ files.");
 	args.addArgument("aabb", "Bounding cube as \"minX minY minZ maxX maxY maxZ\". If not provided it is automatically computed");
 	args.addArgument("incremental", "Add new points to existing conversion");
@@ -99,7 +100,9 @@ PotreeArguments parseArguments(int argc, char **argv){
 	args.addArgument("edl-enabled", "Enable Eye-Dome-Lighting.");
 	args.addArgument("show-skybox", "");
 	args.addArgument("material", "RGB, ELEVATION, INTENSITY, INTENSITY_GRADIENT, CLASSIFICATION, RETURN_NUMBER, SOURCE, LEVEL_OF_DETAIL");
-    args.addArgument("flat_buffer,b", "FlatBuffer file type options: [points || classified-points || bbox || lanes || detections || rtk]");
+	args.addArgument("flat_buffer,b", "FlatBuffer file type options: [points || classified-points || bbox || lanes || detections || rtk]");
+	args.addArgument("metadata_processing", "metadata_processing.json file path");
+
 	PotreeArguments a;
 
 	if (args.has("help")){
@@ -130,6 +133,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 	}
 	a.outdir = args.get("outdir").as<string>();
 	a.flatBufferType= args.get("flat_buffer").as<string>();
+	a.metadataProcessingFile = args.get("metadata_processing").as<string>();
 	a.spacing = args.get("spacing").as<double>(0.0);
 	a.diagonalFraction = args.get("d").as<double>(0.0);
 	a.levels = args.get("levels").as<int>(-1);
@@ -291,7 +295,7 @@ int main(int argc, char **argv){
 		PotreeArguments a = parseArguments(argc, argv);
 		printArguments(a);
 
-        PotreeConverter pc(a.executablePath, a.outdir, a.source);
+		PotreeConverter pc(a.executablePath, a.outdir, a.source);
 
 		pc.spacing = a.spacing;
 		pc.diagonalFraction = a.diagonalFraction;
@@ -315,6 +319,7 @@ int main(int argc, char **argv){
 		pc.material = a.material;
 		pc.showSkybox = a.showSkybox;
 		pc.flatBufferType = a.flatBufferType;
+		pc.metadataProcessingFile = a.metadataProcessingFile;
 
 		pc.convert();
 	}catch(exception &e){

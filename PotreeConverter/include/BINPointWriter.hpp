@@ -140,8 +140,15 @@ public:
 				writer->write((const char*)&point.normal.x, sizeof(float));
 				writer->write((const char*)&point.normal.y, sizeof(float));
 				writer->write((const char*)&point.normal.z, sizeof(float));
-			} else if(attribute == PointAttribute::DUAL_PLUS_CONFIDENCE) {
+			}else if(attribute == PointAttribute::DUAL_PLUS_CONFIDENCE) {
 				writer->write((const char*)&point.dualPlusConfidence, sizeof(uint16_t));
+			}else if(attribute == PointAttribute::LATITUDE) {
+				writer->write((const char*)&point.latitude, sizeof(double));
+			}else if(attribute == PointAttribute::LONGITUDE) {
+				writer->write((const char*)&point.longitude, sizeof(double));
+			}else if(attribute == PointAttribute::ALTITUDE) {
+				auto altitude = point.position.z;
+				writer->write((const char*)&altitude, sizeof(double));
 			}
 		}
 

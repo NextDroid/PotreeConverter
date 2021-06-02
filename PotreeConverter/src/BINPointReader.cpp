@@ -131,7 +131,7 @@ bool BINPointReader::readNextPoint(){
 				point.rtk_orient.y = dBuffer[1];
 				point.rtk_orient.z = dBuffer[2];
 
-			} else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
+			}else if(attribute == PointAttribute::NORMAL_SPHEREMAPPED){
 				// see http://aras-p.info/texts/CompactNormalStorage.html
 				unsigned char* ucBuffer = reinterpret_cast<unsigned char*>(buffer+offset);
 				unsigned char bx = ucBuffer[0];
@@ -194,6 +194,15 @@ bool BINPointReader::readNextPoint(){
 			} else if (attribute == PointAttribute::DUAL_PLUS_CONFIDENCE) {
 				uint16_t* iBuffer = reinterpret_cast<uint16_t*>(buffer+offset);
 				point.dualPlusConfidence = iBuffer[0];
+			} else if (attribute == PointAttribute::LATITUDE) {
+				double* gBuffer = reinterpret_cast<double*>(buffer+offset);
+				point.latitude = gBuffer[0];
+			} else if (attribute == PointAttribute::LONGITUDE) {
+				double* gBuffer = reinterpret_cast<double*>(buffer+offset);
+				point.longitude = gBuffer[0];
+			} else if (attribute == PointAttribute::ALTITUDE) {
+				double* iBuffer = reinterpret_cast<double*>(buffer+offset);
+				point.altitude = iBuffer[0] ;
 			} else {
 				cout << "ERROR: attribute reader not implemented: " << attribute.name << endl;
 				exit(1);
