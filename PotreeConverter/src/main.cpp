@@ -183,14 +183,14 @@ PotreeArguments parseArguments(int argc, char **argv){
 	if (args.has("metadata_processing")) {
 		vector<double> aabbValues;
         auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
-		double adjustmentForLidar = 300;
-		double adjustmentForLidarAlt = 50;
-		double minEastingAdjusted   = vtmMetadata.minEasting - adjustmentForLidar;
-		double minNorthingAdjusted  = vtmMetadata.minNorthing - adjustmentForLidar;
-		double minAltitudeAdjusted = vtmMetadata.minAltitude - adjustmentForLidarAlt;
-		double maxEastingAdjusted   = vtmMetadata.maxEasting + adjustmentForLidar;
-        double maxNorthingAdjusted  = vtmMetadata.maxNorthing + adjustmentForLidar;
-		double maxAltitudeAdjusted  = vtmMetadata.maxAltitude + adjustmentForLidarAlt;
+		double paddingVTM = 300;
+		double paddingAltitude = 100;
+		double minEastingAdjusted   = vtmMetadata.minEasting - paddingVTM;
+		double minNorthingAdjusted  = vtmMetadata.minNorthing - paddingVTM;
+		double minAltitudeAdjusted  = vtmMetadata.minAltitude - paddingAltitude;
+		double maxEastingAdjusted   = vtmMetadata.maxEasting + paddingVTM;
+        double maxNorthingAdjusted  = vtmMetadata.maxNorthing + paddingVTM;
+		double maxAltitudeAdjusted  = vtmMetadata.maxAltitude + paddingAltitude;
 		aabbValues.push_back(minEastingAdjusted);
 		aabbValues.push_back(minNorthingAdjusted);
 		aabbValues.push_back(minAltitudeAdjusted);
