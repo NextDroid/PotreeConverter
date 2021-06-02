@@ -13,6 +13,7 @@
 #include "arguments.hpp"
 #include <experimental/filesystem>
 #include <DataSchemas/Lidar_generated.h>
+#include "functions/VTM_functions.h"
 #include <jmorecfg.h>
 
 
@@ -179,7 +180,26 @@ PotreeArguments parseArguments(int argc, char **argv){
 
 		a.aabbValues = aabbValues;
 	}
-
+	if (args.has("metadata_processing")) {
+		vector<double> aabbValues;
+        auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
+		double adjustmentForLidar = 300;
+		double adjustmentForLidarAlt = 50;
+		double minEastingAdjusted   = vtmMetadata.minEasting + adjustmentForLidar;
+		double minNorthingAdjusted  = vtmMetadata.minNorthing + adjustmentForLidar;
+		double minAltitudeAdjusted = vtmMetadata.minAltitude + adjustmentForLidarAlt;
+		double maxEastingAdjusted   = vtmMetadata.maxEasting - adjustmentForLidar;
+        double maxNorthingAdjusted  = vtmMetadata.maxNorthing - adjustmentForLidar;
+		double maxAltitudeAdjusted  = vtmMetadata.maxAltitude - adjustmentForLidarAlt;
+		aabbValues.push_back(minEastingAdjusted);
+		aabbValues.push_back(minNorthingAdjusted);
+		aabbValues.push_back(minAltitudeAdjusted);
+		aabbValues.push_back(maxEastingAdjusted);
+		aabbValues.push_back(maxNorthingAdjusted);
+		aabbValues.push_back(maxAltitudeAdjusted);
+		a.aabbValues = aabbValues;
+	}
+ 
 	if(args.has("incremental")){
 		a.storeOption = StoreOption::INCREMENTAL;
 	}else if(args.has("overwrite")){
