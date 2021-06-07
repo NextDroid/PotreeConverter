@@ -179,6 +179,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 			cerr << "AABB requires 6 arguments" << endl;
 			exit(1);
 		}
+		
 		a.aabbValues = aabbValues;
 	}
 
