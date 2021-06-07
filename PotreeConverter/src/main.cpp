@@ -182,6 +182,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 
 		a.aabbValues = aabbValues;
 	}
+	
 	if (args.has("metadata_processing")) {
 		vector<double> aabbValues;
         auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
