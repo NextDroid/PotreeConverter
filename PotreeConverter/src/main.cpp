@@ -36,6 +36,8 @@ using Potree::ConversionQuality;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
+constexpr double PADDING_VTM = 300
+
 class SparseGrid;
 
 struct PotreeArguments {
@@ -183,14 +185,12 @@ PotreeArguments parseArguments(int argc, char **argv){
 	if (args.has("metadata_processing")) {
 		vector<double> aabbValues;
         auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
-		double paddingVTM = 300;
-		double paddingAltitude = 100;
-		double minEastingAdjusted   = vtmMetadata.minEasting - paddingVTM;
-		double minNorthingAdjusted  = vtmMetadata.minNorthing - paddingVTM;
-		double minAltitudeAdjusted  = vtmMetadata.minAltitude - paddingAltitude;
-		double maxEastingAdjusted   = vtmMetadata.maxEasting + paddingVTM;
-        double maxNorthingAdjusted  = vtmMetadata.maxNorthing + paddingVTM;
-		double maxAltitudeAdjusted  = vtmMetadata.maxAltitude + paddingAltitude;
+		double minEastingAdjusted   = vtmMetadata.minEasting - PADDING_VTM;
+		double minNorthingAdjusted  = vtmMetadata.minNorthing - PADDING_VTM;
+		double minAltitudeAdjusted  = vtmMetadata.minAltitude - PADDING_VTM;
+		double maxEastingAdjusted   = vtmMetadata.maxEasting + PADDING_VTM;
+		double maxNorthingAdjusted  = vtmMetadata.maxNorthing + PADDING_VTM;
+		double maxAltitudeAdjusted  = vtmMetadata.maxAltitude + PADDING_VTM;
 		aabbValues.push_back(minEastingAdjusted);
 		aabbValues.push_back(minNorthingAdjusted);
 		aabbValues.push_back(minAltitudeAdjusted);
