@@ -184,7 +184,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 
 	if (args.has("metadata_processing")) {
 		vector<double> aabbValues;
-        auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
+		auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
 		double minEastingAdjusted   = vtmMetadata.minEasting - PADDING_VTM;
 		double minNorthingAdjusted  = vtmMetadata.minNorthing - PADDING_VTM;
 		double minAltitudeAdjusted  = vtmMetadata.minAltitude - PADDING_VTM;
