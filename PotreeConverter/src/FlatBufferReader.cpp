@@ -134,7 +134,7 @@ namespace Potree{
 
             reader->read(reinterpret_cast<char *>(buffer), 4);
             if ((reader->eof())||(reader->bad())||(reader->peek() == 0)) {
-                std::cerr << "Reader is at end of file (before preparing next segment)" << std::endl;
+                std::cout << "Reader is at end of file (before preparing next segment)" << std::endl;
                 return false;
             }
 
@@ -147,14 +147,14 @@ namespace Potree{
 //            std::cout << "Segment Size: " << numberOfBytes << std::endl;
 
             if (numberOfBytes==0) {
-                std::cerr << "Reader is at end of file (after reading segment size)" << std::endl;
+                std::cout << "Reader is at end of file (after reading segment size)" << std::endl;
                 return false;
             }
             readerBuffer.clear();
             readerBuffer.reserve(numberOfBytes);
 
             if ((reader->eof())||(reader->bad())||(reader->peek() == 0)) {
-                std::cerr << "Reader is at end of file (after reading segment)" << std::endl;
+                std::cout << "Reader is at end of file (after reading segment)" << std::endl;
                 return false;
             }
             reader->read(&readerBuffer[0], numberOfBytes);
@@ -226,7 +226,7 @@ namespace Potree{
                 return false;
             }
             if (numAdditionalPoints == 0) {
-                std::cerr << "Reader is at end of file (No additional points after reading segment)" << std::endl;
+                std::cout << "Reader is at end of file (No additional points after reading segment)" << std::endl;
                 return false;
             }
 
