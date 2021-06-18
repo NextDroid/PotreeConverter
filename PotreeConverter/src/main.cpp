@@ -179,12 +179,13 @@ PotreeArguments parseArguments(int argc, char **argv){
 			cerr << "AABB requires 6 arguments" << endl;
 			exit(1);
 		}
-		
 		a.aabbValues = aabbValues;
 	}
 
 	if (args.has("metadata_processing")) {
+
 		vector<double> aabbValues;
+
 		auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
 		double minEastingAdjusted   = vtmMetadata.minEasting - PADDING_VTM;
 		double minNorthingAdjusted  = vtmMetadata.minNorthing - PADDING_VTM;
@@ -192,6 +193,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 		double maxEastingAdjusted   = vtmMetadata.maxEasting + PADDING_VTM;
 		double maxNorthingAdjusted  = vtmMetadata.maxNorthing + PADDING_VTM;
 		double maxAltitudeAdjusted  = vtmMetadata.maxAltitude + PADDING_VTM;
+
 		aabbValues.push_back(minEastingAdjusted);
 		aabbValues.push_back(minNorthingAdjusted);
 		aabbValues.push_back(minAltitudeAdjusted);
