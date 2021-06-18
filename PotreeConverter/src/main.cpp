@@ -36,7 +36,7 @@ using Potree::ConversionQuality;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
-constexpr double PADDING_VTM = 300
+constexpr double PADDING_VTM = 300;
 
 class SparseGrid;
 
