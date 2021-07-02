@@ -36,7 +36,7 @@ using Potree::ConversionQuality;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
-constexpr double PADDING_VTM = 300
+constexpr double PADDING_VTM = 300;
 
 class SparseGrid;
 
@@ -202,7 +202,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 		aabbValues.push_back(maxAltitudeAdjusted);
 		a.aabbValues = aabbValues;
 	}
- 
+
 	if(args.has("incremental")){
 		a.storeOption = StoreOption::INCREMENTAL;
 	}else if(args.has("overwrite")){
@@ -352,4 +352,3 @@ int main(int argc, char **argv){
 
 	return 0;
 }
-
