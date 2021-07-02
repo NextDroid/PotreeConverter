@@ -183,7 +183,6 @@ PotreeArguments parseArguments(int argc, char **argv){
 	}
 
 	if (args.has("metadata_processing")) {
-
 		vector<double> aabbValues;
 
 		auto vtmMetadata = parseVTMmetadata(a.metadataProcessingFile);
@@ -200,6 +199,7 @@ PotreeArguments parseArguments(int argc, char **argv){
 		aabbValues.push_back(maxEastingAdjusted);
 		aabbValues.push_back(maxNorthingAdjusted);
 		aabbValues.push_back(maxAltitudeAdjusted);
+
 		a.aabbValues = aabbValues;
 	}
 
